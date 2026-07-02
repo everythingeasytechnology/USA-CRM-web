@@ -1,0 +1,126 @@
+<x-layouts.admin active="services">
+    <x-slot:breadcrumbs>
+        <x-admin.breadcrumbs :items="[['label' => 'Services Management']]" />
+    </x-slot:breadcrumbs>
+
+    <div class="space-y-6">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Services Management</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Configure company service listings, descriptions, categories, and SEO schemas.</p>
+            </div>
+            <div class="flex items-center gap-2.5">
+                <x-admin.button variant="primary" size="sm" href="/admin/services/create">
+                    <x-admin.icon name="plus" class="w-4 h-4" />
+                    <span>Create Service</span>
+                </x-admin.button>
+            </div>
+        </div>
+
+        <!-- Filters & Bulk Actions -->
+        <x-admin.card>
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <!-- Search bar -->
+                <div class="w-full sm:max-w-xs relative">
+                    <input 
+                        type="text" 
+                        placeholder="Search services..." 
+                        class="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                    />
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <x-admin.icon name="search" class="w-4 h-4 text-slate-400" />
+                    </div>
+                </div>
+
+                <!-- Category and status pickers -->
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <select class="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-300">
+                        <option value="">All Categories</option>
+                        <option value="web-dev">Web Development</option>
+                        <option value="app-dev">Mobile Application Development</option>
+                        <option value="digital-marketing">Digital Marketing & Growth</option>
+                        <option value="seo-marketing">SEO & Search Optimization</option>
+                        <option value="design-branding">UI/UX Design & Branding</option>
+                        <option value="ai-automation">AI Automation & Integration</option>
+                        <option value="cloud-hosting">Cloud Hosting & Infrastructure</option>
+                        <option value="crm-erp">Corporate CRM/ERP Solutions</option>
+                        <option value="strategy-consultancy">Consultancy & Agency Strategy</option>
+                    </select>
+                    <select class="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-300">
+                        <option value="">All Statuses</option>
+                        <option value="1">Active / Published</option>
+                        <option value="0">Drafts / Disabled</option>
+                    </select>
+                    <x-admin.button variant="secondary" size="sm">
+                        <x-admin.icon name="filters" class="w-4 h-4" />
+                        <span>Filter</span>
+                    </x-admin.button>
+                </div>
+            </div>
+        </x-admin.card>
+
+        <!-- Services Table -->
+        <x-admin.card :padding="false">
+            <x-admin.table :headers="['Service Name', 'URL Slug', 'Category', 'Featured Image', 'Status', 'SEO Score', 'Actions']">
+                @php
+                    $services = \App\Models\Service::orderBy('display_order')->get();
+                @endphp
+
+                @foreach ($services as $service)
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-bold text-slate-900 dark:text-white text-xs block leading-tight">{{ $service->name }}</span>
+                            @if ($service->pseo_enabled)
+                                <span class="inline-flex items-center gap-1.5 mt-1 text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-150/10">
+                                    <x-admin.icon name="seo" class="w-3 h-3" />
+                                    <span>Programmatic Active</span>
+                                </span>
+                            @else
+                                <span class="text-[10px] text-slate-400 block mt-0.5">Updated {{ $service->updated_at->diffForHumans() }}</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-xs font-mono text-slate-550 dark:text-slate-400">
+                            /services/{{ $service->slug }}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-700 dark:text-slate-300">
+                            {{ $service->category }}
+                        </td>
+                        <td class="px-6 py-4">
+                            @if ($service->cover_image)
+                                <img src="{{ asset($service->cover_image) }}" class="h-9 w-16 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-750 object-cover" />
+                            @else
+                                <div class="h-9 w-16 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-750 flex items-center justify-center text-[10px] text-slate-400 font-semibold uppercase">
+                                    NO IMG
+                                </div>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4">
+                            <x-admin.form.toggle name="srv_active_{{ $loop->index }}" :value="$service->is_active" />
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-bold font-mono bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-255/10">
+                                95%
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-1">
+                                <x-admin.button variant="ghost" size="xs" href="/admin/services/create" title="Edit Service">
+                                    <x-admin.icon name="pencil" class="w-4 h-4 text-slate-500" />
+                                </x-admin.button>
+                                <x-admin.button variant="ghost" size="xs" @click="alert('Service duplicated successfully!')" title="Duplicate Service">
+                                    <x-admin.icon name="duplicate" class="w-4 h-4 text-slate-500" />
+                                </x-admin.button>
+                                <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30" @click="alert('Delete confirmation modal triggered.')" title="Delete Service">
+                                    <x-admin.icon name="trash" class="w-4 h-4" />
+                                </x-admin.button>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </x-admin.table>
+            
+            <x-admin.pagination :currentPage="1" :totalPages="5" :totalResults="24" :perPage="5" />
+        </x-admin.card>
+    </div>
+</x-layouts.admin>
