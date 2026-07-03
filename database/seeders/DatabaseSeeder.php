@@ -159,7 +159,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Seed Testimonials
-        Testimonial::create(['name' => 'Sherlock Holmes', 'company' => 'Watson Consultancy Group', 'rating' => 5, 'review' => 'Anti Gravity CMS is incredibly fast. The JSON-LD schema generators and instant sitemaps boosted our SEO ranking significantly. Excellent UX simple layout.', 'is_active' => true, 'sort_order' => 1]);
+        Testimonial::create(['name' => 'Sherlock Holmes', 'company' => 'Watson Consultancy Group', 'rating' => 5, 'review' => 'EverythingEasy is incredibly fast. The JSON-LD schema generators and instant sitemaps boosted our SEO ranking significantly. Excellent UX simple layout.', 'is_active' => true, 'sort_order' => 1]);
         Testimonial::create(['name' => 'Adler Irene', 'company' => 'Opera Bohemia Inc.', 'rating' => 5, 'review' => 'Managing services packages and coupon discount checkouts has never been this simple. Reusable blade configurations saved us hundreds of dev hours.', 'is_active' => true, 'sort_order' => 2]);
         Testimonial::create(['name' => 'Mycroft Holmes', 'company' => 'Diogenes Government Registry', 'rating' => 4, 'review' => 'Simple UI setup with class-based dark mode toggles. Meets all compliance security parameters. Highly stable CMS core.', 'is_active' => false, 'sort_order' => 3]);
 
@@ -170,7 +170,7 @@ class DatabaseSeeder extends Seeder
 
         // Seed FAQs
         Faq::create(['question' => 'What payment methods do you support for checkouts?', 'category' => 'pricing', 'answer' => 'We integrate Stripe, PayPal, Razorpay, and direct UPI transfers with sandbox toggles.', 'is_active' => true, 'sort_order' => 1]);
-        Faq::create(['question' => 'How does the sitemap regeneration operate?', 'category' => 'technical', 'answer' => 'Anti Gravity CMS generates sitemaps weekly or automatically index-pushes via IndexNow API.', 'is_active' => true, 'sort_order' => 2]);
+        Faq::create(['question' => 'How does the sitemap regeneration operate?', 'category' => 'technical', 'answer' => 'EverythingEasy generates sitemaps weekly or automatically index-pushes via IndexNow API.', 'is_active' => true, 'sort_order' => 2]);
         Faq::create(['question' => 'Can I customize the primary and secondary branding colors?', 'category' => 'general', 'answer' => 'Yes. Admin Settings allows toggling accent colors via full spectrum color pickers.', 'is_active' => true, 'sort_order' => 3]);
         Faq::create(['question' => 'Are legal policies compliance-ready?', 'category' => 'general', 'answer' => 'We support rich text revisions history logs for privacy and return policies.', 'is_active' => false, 'sort_order' => 4]);
 

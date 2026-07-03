@@ -119,7 +119,7 @@
     </div>
 
     <!-- Reusable Command Palette / Search Modal (Global) -->
-    <x-admin.modal name="search-modal" title="Anti Gravity Search" maxW="lg">
+    <x-admin.modal name="search-modal" title="EverythingEasy Search" maxW="lg">
         <div x-data="{ searchQuery: '' }" class="space-y-4">
             <!-- Search Input Box -->
             <div class="relative">

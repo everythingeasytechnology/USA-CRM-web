@@ -60,11 +60,11 @@
     <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
         <a href="/admin" class="flex items-center gap-2.5">
             <span class="h-8 w-8 rounded-lg bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white font-extrabold text-lg shadow-sm shadow-blue-500/30">
-                A
+                E
             </span>
             <div class="flex flex-col">
-                <span class="text-sm font-semibold text-white leading-tight">Anti Gravity</span>
-                <span class="text-[10px] text-slate-500 leading-none">CMS Enterprise</span>
+                <span class="text-sm font-semibold text-white leading-tight">EverythingEasy</span>
+                <span class="text-[10px] text-slate-500 leading-none">Admin CRM</span>
             </div>
         </a>
     </div>

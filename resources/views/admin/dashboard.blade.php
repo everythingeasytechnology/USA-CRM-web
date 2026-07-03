@@ -381,7 +381,7 @@
                 </x-admin.card>
 
                 <!-- Activity Feed timeline widget -->
-                <x-admin.card title="Recent Activity" subtitle="Updates from Anti Gravity CMS background logs." class="mt-6">
+                <x-admin.card title="Recent Activity" subtitle="Updates from EverythingEasy background logs." class="mt-6">
                     <div class="flow-root">
                         <ul role="list" class="-mb-8">
                             <!-- Timeline node -->
