@@ -18,12 +18,27 @@
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Upload and manage site images, PDFs, case-study brochures, and logo assets.</p>
             </div>
             <div class="flex items-center gap-2.5">
-                <x-admin.button variant="primary" size="sm" @click="alert('Upload modal triggered.')">
+                <x-admin.button variant="primary" size="sm" @click="$dispatch('open-modal', 'upload-modal')">
                     <x-admin.icon name="upload" class="w-4 h-4 mr-1.5" />
                     <span>Upload Files</span>
                 </x-admin.button>
             </div>
         </div>
+
+        <x-admin.modal name="upload-modal" title="Upload Media File" maxW="md">
+            <form id="upload-media-form" action="/admin/media" method="POST" enctype="multipart/form-data" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">File</label>
+                    <input type="file" name="file" required class="block w-full text-sm text-slate-700 dark:text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-500/10 dark:file:text-blue-400" />
+                </div>
+                <x-admin.form.input name="alt_text" label="Alt Text (SEO)" placeholder="Describe this file for accessibility & search engines" />
+            </form>
+            <x-slot:footer>
+                <x-admin.button type="submit" form="upload-media-form" variant="primary" size="sm">Upload</x-admin.button>
+                <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
+            </x-slot:footer>
+        </x-admin.modal>
 
         <!-- Filters Grid Toolbar -->
         <x-admin.card>
@@ -77,28 +92,25 @@
         </x-admin.card>
 
         @php
-            $files = [
-                ['name' => 'everythingeasy_logo_light.webp', 'type' => 'webp', 'size' => '24 KB', 'dimensions' => '300x80 px', 'date' => '2026-07-02', 'url' => 'https://everythingeasy.in/assets/logo.webp', 'alt' => 'EverythingEasy primary light branding logo'],
-                ['name' => 'everythingeasy_logo_dark.webp', 'type' => 'webp', 'size' => '26 KB', 'dimensions' => '300x80 px', 'date' => '2026-07-02', 'url' => 'https://everythingeasy.in/assets/logo-dark.webp', 'alt' => 'EverythingEasy secondary dark branding logo'],
-                ['name' => 'services_web_dev_banner.webp', 'type' => 'webp', 'size' => '142 KB', 'dimensions' => '1200x630 px', 'date' => '2026-07-01', 'url' => 'https://everythingeasy.in/assets/blog-banner.webp', 'alt' => 'Custom Web development service header banner image'],
-                ['name' => 'proposal_brochure_v2.pdf', 'type' => 'pdf', 'size' => '1.4 MB', 'dimensions' => '—', 'date' => '2026-06-25', 'url' => 'https://everythingeasy.in/assets/brochure.pdf', 'alt' => 'EverythingEasy corporate design proposal pamphlet'],
-                ['name' => 'homepage_seo_promo.mp4', 'type' => 'mp4', 'size' => '8.6 MB', 'dimensions' => '1920x1080 px', 'date' => '2026-06-20', 'url' => 'https://everythingeasy.in/assets/promo.mp4', 'alt' => 'Promotional corporate marketing clip'],
-            ];
+            $fmtSize = fn ($bytes) => $bytes >= 1048576 ? number_format($bytes / 1048576, 1).' MB' : number_format($bytes / 1024).' KB';
+            $extOf = fn ($file) => strtolower(pathinfo($file->name, PATHINFO_EXTENSION)) ?: 'file';
         @endphp
 
         <!-- Grid View Mode -->
         <div x-show="viewMode === 'grid'" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            @foreach ($files as $file)
-                <div 
+            @forelse ($files as $file)
+                @php $ext = $extOf($file); @endphp
+                <div
                     @click="
                         selectedMedia = {
-                            name: '{{ $file['name'] }}',
-                            type: '{{ $file['type'] }}',
-                            size: '{{ $file['size'] }}',
-                            dimensions: '{{ $file['dimensions'] }}',
-                            date: '{{ $file['date'] }}',
-                            url: '{{ $file['url'] }}',
-                            alt: '{{ $file['alt'] }}'
+                            id: {{ $file->id }},
+                            name: '{{ addslashes($file->name) }}',
+                            type: '{{ $ext }}',
+                            size: '{{ $fmtSize($file->size) }}',
+                            dimensions: '{{ $file->dimensions ?? '—' }}',
+                            date: '{{ $file->created_at->format('Y-m-d') }}',
+                            url: '{{ $file->url }}',
+                            alt: '{{ addslashes($file->alt_text ?? '') }}'
                         };
                         $dispatch('open-drawer', 'media-drawer');
                     "
@@ -106,9 +118,9 @@
                 >
                     <!-- Preview Canvas -->
                     <div class="h-32 bg-slate-50 dark:bg-slate-950 flex items-center justify-center border-b border-slate-100 dark:border-slate-850 relative">
-                        @if ($file['type'] === 'webp')
-                            <div class="text-[10px] font-bold text-slate-400 select-none uppercase">IMAGE PREVIEW</div>
-                        @elseif ($file['type'] === 'pdf')
+                        @if (str_starts_with($file->mime_type ?? '', 'image/'))
+                            <img src="{{ $file->url }}" class="h-full w-full object-cover" />
+                        @elseif ($ext === 'pdf')
                             <span class="p-2 bg-red-100 text-red-650 rounded-lg"><x-admin.icon name="document-text" class="w-6 h-6" /></span>
                         @else
                             <span class="p-2 bg-amber-100 text-amber-650 rounded-lg"><x-admin.icon name="media" class="w-6 h-6" /></span>
@@ -116,14 +128,16 @@
                     </div>
                     <!-- Details description footer -->
                     <div class="p-3 text-2xs">
-                        <span class="font-bold text-slate-900 dark:text-white block truncate">{{ $file['name'] }}</span>
+                        <span class="font-bold text-slate-900 dark:text-white block truncate">{{ $file->name }}</span>
                         <div class="flex justify-between items-center text-slate-450 mt-1.5">
-                            <span>{{ $file['size'] }}</span>
-                            <span class="uppercase text-[9px] font-bold bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded-sm">{{ $file['type'] }}</span>
+                            <span>{{ $fmtSize($file->size) }}</span>
+                            <span class="uppercase text-[9px] font-bold bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded-sm">{{ $ext }}</span>
                         </div>
                     </div>
                 </div>
-            @endforeach
+            @empty
+                <div class="col-span-full text-center text-xs text-slate-400 py-12">No media files uploaded yet.</div>
+            @endforelse
         </div>
 
         <!-- List View Mode -->
@@ -131,38 +145,40 @@
             <x-admin.card :padding="false">
                 <x-admin.table :headers="['File Name', 'Format Type', 'File Size', 'Dimensions', 'Created Date', 'Alt Text']">
                     @foreach ($files as $file)
-                        <tr 
+                        @php $ext = $extOf($file); @endphp
+                        <tr
                             class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors cursor-pointer"
                             @click="
                                 selectedMedia = {
-                                    name: '{{ $file['name'] }}',
-                                    type: '{{ $file['type'] }}',
-                                    size: '{{ $file['size'] }}',
-                                    dimensions: '{{ $file['dimensions'] }}',
-                                    date: '{{ $file['date'] }}',
-                                    url: '{{ $file['url'] }}',
-                                    alt: '{{ $file['alt'] }}'
+                                    id: {{ $file->id }},
+                                    name: '{{ addslashes($file->name) }}',
+                                    type: '{{ $ext }}',
+                                    size: '{{ $fmtSize($file->size) }}',
+                                    dimensions: '{{ $file->dimensions ?? '—' }}',
+                                    date: '{{ $file->created_at->format('Y-m-d') }}',
+                                    url: '{{ $file->url }}',
+                                    alt: '{{ addslashes($file->alt_text ?? '') }}'
                                 };
                                 $dispatch('open-drawer', 'media-drawer');
                             "
                         >
                             <td class="px-6 py-4 font-semibold text-xs text-slate-900 dark:text-white truncate max-w-xs">
-                                {{ $file['name'] }}
+                                {{ $file->name }}
                             </td>
                             <td class="px-6 py-4 text-2xs uppercase font-bold text-slate-500">
-                                {{ $file['type'] }}
+                                {{ $ext }}
                             </td>
                             <td class="px-6 py-4 text-xs font-mono text-slate-700 dark:text-slate-300">
-                                {{ $file['size'] }}
+                                {{ $fmtSize($file->size) }}
                             </td>
                             <td class="px-6 py-4 text-xs font-mono text-slate-500">
-                                {{ $file['dimensions'] }}
+                                {{ $file->dimensions ?? '—' }}
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-500">
-                                {{ $file['date'] }}
+                                {{ $file->created_at->format('Y-m-d') }}
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-550 dark:text-slate-400 max-w-xxs truncate">
-                                {{ $file['alt'] }}
+                                {{ $file->alt_text }}
                             </td>
                         </tr>
                     @endforeach
@@ -175,7 +191,8 @@
             <div class="space-y-6" x-show="selectedMedia">
                 <!-- Preview -->
                 <div class="h-44 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-center relative overflow-hidden">
-                    <span class="text-xs text-slate-400 uppercase font-mono font-bold select-none">PREVIEW LAYER</span>
+                    <img x-show="selectedMedia && ['jpg','jpeg','png','webp','gif'].includes(selectedMedia.type)" x-bind:src="selectedMedia ? selectedMedia.url : ''" class="h-full w-full object-contain" />
+                    <span x-show="!selectedMedia || !['jpg','jpeg','png','webp','gif'].includes(selectedMedia.type)" class="text-xs text-slate-400 uppercase font-mono font-bold select-none" x-text="selectedMedia ? selectedMedia.type : ''"></span>
                 </div>
 
                 <!-- Attributes lists -->
@@ -188,29 +205,35 @@
                 </div>
 
                 <!-- Input fields -->
-                <div class="space-y-4">
-                    <x-admin.form.input name="media_alt" label="Image Alt text (SEO)" x-bind:value="selectedMedia ? selectedMedia.alt : ''" help="Describe this image to search engines and screen readers" />
-                    <x-admin.form.input name="media_title" label="Media Title" x-bind:value="selectedMedia ? selectedMedia.name : ''" />
-                    
+                <form :action="selectedMedia ? '/admin/media/' + selectedMedia.id : ''" method="POST" id="media-update-form" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <x-admin.form.input name="alt_text" label="Image Alt text (SEO)" x-bind:value="selectedMedia ? selectedMedia.alt : ''" help="Describe this image to search engines and screen readers" />
+                    <x-admin.form.input name="name" label="Media Title" x-bind:value="selectedMedia ? selectedMedia.name : ''" />
+
                     <!-- Copyable URL field -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">File URL Link</label>
                         <div class="flex gap-2">
-                            <input 
-                                type="text" 
-                                readonly 
-                                x-bind:value="selectedMedia ? selectedMedia.url : ''" 
+                            <input
+                                type="text"
+                                readonly
+                                x-bind:value="selectedMedia ? selectedMedia.url : ''"
                                 class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-700 dark:text-slate-300"
                             />
-                            <x-admin.button variant="secondary" size="sm" @click="navigator.clipboard.writeText(selectedMedia.url); alert('URL copied to clipboard!')">Copy</x-admin.button>
+                            <x-admin.button type="button" variant="secondary" size="sm" @click="navigator.clipboard.writeText(selectedMedia.url); alert('URL copied to clipboard!')">Copy</x-admin.button>
                         </div>
                     </div>
-                </div>
+                </form>
+                <form :action="selectedMedia ? '/admin/media/' + selectedMedia.id : ''" method="POST" id="media-delete-form" onsubmit="return confirm('Delete this file permanently?')">
+                    @csrf
+                    @method('DELETE')
+                </form>
             </div>
-            
+
             <x-slot:footer>
-                <x-admin.button variant="primary" size="sm" @click="$dispatch('close-drawer')">Save Metadata</x-admin.button>
-                <x-admin.button variant="danger" size="sm" class="mr-auto" @click="$dispatch('close-drawer'); alert('File deleted successfully!')">Delete File</x-admin.button>
+                <x-admin.button type="submit" form="media-update-form" variant="primary" size="sm">Save Metadata</x-admin.button>
+                <x-admin.button type="submit" form="media-delete-form" variant="danger" size="sm" class="mr-auto">Delete File</x-admin.button>
             </x-slot:footer>
         </x-admin.drawer>
 

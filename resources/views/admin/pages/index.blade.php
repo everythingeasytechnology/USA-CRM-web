@@ -3,7 +3,7 @@
         <x-admin.breadcrumbs :items="[['label' => 'Static Pages Layouts']]" />
     </x-slot:breadcrumbs>
 
-    <div class="space-y-6" x-data="{ selectedPage: { name: '', route: '', title: '', desc: '', status: true } }">
+    <div class="space-y-6" x-data="{ selectedPage: { id: null, name: '', route: '', title: '', desc: '', status: true } }">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -14,53 +14,35 @@
 
         <!-- Static pages layout logs -->
         <x-admin.card :padding="false">
-            <x-admin.table :headers="['Page Name', 'Route Path', 'SEO Meta Title', 'SEO Score', 'Status', 'Actions']">
-                @php
-                    $staticPages = [
-                        ['name' => 'Homepage Layout', 'route' => '/', 'title' => 'EverythingEasy | Enterprise software simple', 'score' => '94%', 'status' => true, 'desc' => 'Core landing marketing layout containing portfolio list, statistics, and email newsletters.'],
-                        ['name' => 'About Us Roster', 'route' => '/about', 'title' => 'About EverythingEasy Agency Team', 'score' => '89%', 'status' => true, 'desc' => 'Company history, mission parameters, and executive profiles list.'],
-                        ['name' => 'Contact Desk', 'route' => '/contact', 'title' => 'Get in Touch with support | everythingeasy', 'score' => '92%', 'status' => true, 'desc' => 'Office addresses, maps embeds, telephone, and quote fields.'],
-                        ['name' => 'Frequently Asked FAQs', 'route' => '/faqs', 'title' => 'Service FAQs answers', 'score' => '81%', 'status' => true, 'desc' => 'Index details answering checkout queries.'],
-                        ['name' => 'Careers Portal', 'route' => '/careers', 'title' => 'Join the everythingeasy Team', 'score' => '85%', 'status' => false, 'desc' => 'Open job listing posts.'],
-                        ['name' => 'Maintenance Overlay', 'route' => '/maintenance', 'title' => 'System Maintenance Underway', 'score' => '—', 'status' => true, 'desc' => 'Lock screen showing public downtime alerts.'],
-                    ];
-                @endphp
-
-                @foreach ($staticPages as $page)
+            <x-admin.table :headers="['Page Name', 'Route Path', 'SEO Meta Title', 'Status', 'Actions']">
+                @foreach ($pages as $page)
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
                         <td class="px-6 py-4">
-                            <span class="font-bold text-slate-900 dark:text-white text-xs block leading-tight">{{ $page['name'] }}</span>
-                            <span class="text-[9px] text-slate-400 block mt-0.5">Updated 1 week ago</span>
+                            <span class="font-bold text-slate-900 dark:text-white text-xs block leading-tight">{{ $page->name }}</span>
+                            <span class="text-[9px] text-slate-400 block mt-0.5">Updated {{ $page->updated_at->diffForHumans() }}</span>
                         </td>
                         <td class="px-6 py-4 text-xs font-mono text-slate-650 dark:text-slate-400">
-                            {{ $page['route'] }}
+                            {{ $page->route }}
                         </td>
                         <td class="px-6 py-4 text-xs text-slate-700 dark:text-slate-350 max-w-xs truncate">
-                            {{ $page['title'] }}
+                            {{ $page->seo_title }}
                         </td>
                         <td class="px-6 py-4">
-                            @if ($page['score'] !== '—')
-                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-bold font-mono bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-255/10">
-                                    {{ $page['score'] }}
-                                </span>
-                            @else
-                                <span class="text-xs text-slate-400">—</span>
-                            @endif
+                            <x-admin.toggle-form :action="'/admin/pages/'.$page->id.'/toggle-active'" :active="$page->is_active" />
                         </td>
                         <td class="px-6 py-4">
-                            <x-admin.form.toggle name="page_active_{{ $loop->index }}" :value="$page['status']" />
-                        </td>
-                        <td class="px-6 py-4">
-                            <x-admin.button 
-                                variant="secondary" 
+                            <x-admin.button
+                                type="button"
+                                variant="secondary"
                                 size="xs"
                                 @click="
                                     selectedPage = {
-                                        name: '{{ $page['name'] }}',
-                                        route: '{{ $page['route'] }}',
-                                        title: '{{ $page['title'] }}',
-                                        desc: '{{ $page['desc'] }}',
-                                        status: {{ $page['status'] ? 'true' : 'false' }}
+                                        id: {{ $page->id }},
+                                        name: '{{ addslashes($page->name) }}',
+                                        route: '{{ $page->route }}',
+                                        title: '{{ addslashes($page->seo_title ?? '') }}',
+                                        desc: '{{ addslashes($page->content ?? '') }}',
+                                        status: {{ $page->is_active ? 'true' : 'false' }}
                                     };
                                     $dispatch('open-drawer', 'edit-page-drawer');
                                 "
@@ -84,25 +66,28 @@
                     <span class="text-xs font-mono text-slate-500 mt-1 block" x-text="'Route path: ' + selectedPage.route"></span>
                 </div>
 
-                <div class="space-y-4">
+                <form :action="selectedPage.id ? '/admin/pages/' + selectedPage.id : ''" method="POST" enctype="multipart/form-data" id="page-update-form" class="space-y-4">
+                    @csrf
+                    @method('PUT')
                     <x-admin.form.input name="seo_meta_title" label="SEO Page Title" x-bind:value="selectedPage.title" :required="true" />
                     <x-admin.form.textarea name="seo_meta_desc" label="SEO Meta Description" placeholder="Keep under 160 characters..." :rows="3" />
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Hero Section Header Banner</label>
-                        <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-5 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
+                        <label class="block border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-5 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
                             <x-admin.icon name="upload" class="w-8 h-8 text-slate-400 mx-auto" />
                             <span class="text-xs font-semibold text-slate-650 dark:text-slate-350 block mt-2">Upload Hero Background Asset</span>
-                        </div>
+                            <input type="file" name="hero_image" accept="image/*" class="hidden" onchange="this.closest('label').querySelector('span').textContent = this.files[0]?.name || 'Upload Hero Background Asset'">
+                        </label>
                     </div>
 
-                    <x-admin.form.textarea name="mock_content" label="HTML Content Blocks (Dummy)" x-bind:value="selectedPage.desc" :rows="4" />
-                </div>
+                    <x-admin.form.textarea name="mock_content" label="HTML Content Blocks" x-bind:value="selectedPage.desc" :rows="4" />
+                </form>
             </div>
 
             <x-slot:footer>
-                <x-admin.button variant="primary" size="sm" @click="$dispatch('close-drawer')">Save Configuration</x-admin.button>
-                <x-admin.button variant="secondary" size="sm" @click="$dispatch('close-drawer')">Cancel</x-admin.button>
+                <x-admin.button type="submit" form="page-update-form" variant="primary" size="sm">Save Configuration</x-admin.button>
+                <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-drawer')">Cancel</x-admin.button>
             </x-slot:footer>
         </x-admin.drawer>
 

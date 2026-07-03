@@ -11,8 +11,10 @@ class Addon extends Model
 
     protected $fillable = [
         'name',
+        'description',
         'price',
         'is_active',
+        'sort_order',
     ];
 
     protected $casts = [

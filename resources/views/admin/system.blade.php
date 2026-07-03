@@ -24,21 +24,21 @@
                                 <span class="font-bold text-slate-900 dark:text-white block">Application Route Cache</span>
                                 <span class="text-[10px] text-slate-450 mt-0.5 block">Pre-compiles route matching tables</span>
                             </div>
-                            <x-admin.button variant="secondary" size="xs" @click="alert('Route cache cleared!')">Clear</x-admin.button>
+                            <form method="POST" action="/admin/system/cache/route">@csrf<x-admin.button type="submit" variant="secondary" size="xs">Clear</x-admin.button></form>
                         </div>
                         <div class="flex justify-between items-center py-2.5 border-b border-slate-100 dark:border-slate-850">
                             <div>
                                 <span class="font-bold text-slate-900 dark:text-white block">Template View Cache</span>
                                 <span class="text-[10px] text-slate-450 mt-0.5 block">Clears compiled Blade view files</span>
                             </div>
-                            <x-admin.button variant="secondary" size="xs" @click="alert('View cache cleared!')">Clear</x-admin.button>
+                            <form method="POST" action="/admin/system/cache/view">@csrf<x-admin.button type="submit" variant="secondary" size="xs">Clear</x-admin.button></form>
                         </div>
                         <div class="flex justify-between items-center py-2.5">
                             <div>
                                 <span class="font-bold text-slate-900 dark:text-white block">Asset Config Cache</span>
                                 <span class="text-[10px] text-slate-450 mt-0.5 block">Clears custom .env configuration settings caching</span>
                             </div>
-                            <x-admin.button variant="secondary" size="xs" @click="alert('Config cache cleared!')">Clear</x-admin.button>
+                            <form method="POST" action="/admin/system/cache/config">@csrf<x-admin.button type="submit" variant="secondary" size="xs">Clear</x-admin.button></form>
                         </div>
                     </div>
                 </x-admin.card>
@@ -80,20 +80,16 @@
                 <!-- System Configs -->
                 <x-admin.card title="System limits">
                     <div class="space-y-4 text-xs">
-                        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-850"><span class="text-slate-550">PHP Version:</span><span class="font-bold text-slate-700 dark:text-slate-300">8.3.29</span></div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-850"><span class="text-slate-550">Laravel Core:</span><span class="font-bold text-slate-700 dark:text-slate-300">13.18.0</span></div>
-                        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-850"><span class="text-slate-550">Max Upload Limit:</span><span class="font-bold text-slate-700 dark:text-slate-300">64 MB</span></div>
-                        <div class="flex justify-between py-2"><span class="text-slate-550">Active Timezone:</span><span class="font-bold text-slate-700 dark:text-slate-300">Asia/Kolkata</span></div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-850"><span class="text-slate-550">PHP Version:</span><span class="font-bold text-slate-700 dark:text-slate-300">{{ $phpVersion }}</span></div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-850"><span class="text-slate-550">Laravel Core:</span><span class="font-bold text-slate-700 dark:text-slate-300">{{ $laravelVersion }}</span></div>
+                        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-850"><span class="text-slate-550">Max Upload Limit:</span><span class="font-bold text-slate-700 dark:text-slate-300">{{ $uploadLimit }}</span></div>
+                        <div class="flex justify-between py-2"><span class="text-slate-550">Active Timezone:</span><span class="font-bold text-slate-700 dark:text-slate-300">{{ $timezone }}</span></div>
                     </div>
                 </x-admin.card>
 
                 <!-- Server logs preview -->
                 <x-admin.card title="System Error Logs (Latest)">
-                    <div class="bg-slate-950 rounded-xl p-3 border border-slate-850 font-mono text-[10px] text-emerald-500 leading-normal max-h-56 overflow-y-auto">
-                        [2026-07-02 18:41:54] laravel.INFO: Config settings saved successfully.<br/>
-                        [2026-07-02 18:42:01] laravel.WARNING: Google API timeout when generating sitemap index.<br/>
-                        [2026-07-02 18:43:07] laravel.INFO: Clear route view compilation caches triggered.
-                    </div>
+                    <div class="bg-slate-950 rounded-xl p-3 border border-slate-850 font-mono text-[10px] text-emerald-500 leading-normal max-h-56 overflow-y-auto whitespace-pre-wrap">{{ $logTail ?: 'No log entries yet.' }}</div>
                 </x-admin.card>
             </div>
 

@@ -26,33 +26,31 @@
         <div x-show="activeTab === 'messages'" class="space-y-6">
             <!-- Filters -->
             <x-admin.card>
-                <div class="flex flex-wrap items-center justify-between gap-4">
+                <form method="GET" action="/admin/forms" class="flex flex-wrap items-center justify-between gap-4">
                     <div class="w-full sm:max-w-xs relative">
-                        <input 
-                            type="text" 
-                            placeholder="Search messages..." 
+                        <input
+                            type="text"
+                            name="search"
+                            value="{{ request('search') }}"
+                            placeholder="Search messages..."
                             class="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
                         />
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <x-admin.icon name="search" class="w-4 h-4 text-slate-400" />
                         </div>
                     </div>
-                    <select class="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-300">
+                    <select name="form_type" onchange="this.form.submit()" class="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-300">
                         <option value="">Form Type</option>
-                        <option value="contact">Contact Form</option>
-                        <option value="quote">Quote Requests</option>
-                        <option value="career">Job Applications</option>
+                        <option value="contact" @selected(request('form_type') === 'contact')>Contact Form</option>
+                        <option value="quote" @selected(request('form_type') === 'quote')>Quote Requests</option>
+                        <option value="career" @selected(request('form_type') === 'career')>Job Applications</option>
                     </select>
-                </div>
+                </form>
             </x-admin.card>
 
             <!-- Table of messages -->
             <x-admin.card :padding="false">
                 <x-admin.table :headers="['Sender Details', 'Form Origin', 'Subject / Summary', 'Date Received', 'Actions']">
-                    @php
-                        $msgs = \App\Models\ContactMessage::latest()->get();
-                    @endphp
-
                     @forelse ($msgs as $msg)
                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
                             <td class="px-6 py-4">
@@ -82,25 +80,26 @@
                         </tr>
                     @endforelse
                 </x-admin.table>
-                
-                <x-admin.pagination :currentPage="1" :totalPages="4" :totalResults="18" :perPage="4" />
+
+                <x-admin.pagination :currentPage="1" :totalPages="1" :totalResults="$msgs->count()" :perPage="max($msgs->count(), 1)" />
             </x-admin.card>
         </div>
 
         <!-- Tab 2: Spam & Recaptcha Settings -->
         <div x-show="activeTab === 'recaptcha'" class="space-y-6" style="display: none;">
             <x-admin.card title="Google reCAPTCHA v3 Config">
-                <form action="#save-recaptcha" class="space-y-4" @submit.prevent="alert('Spam settings saved successfully!')">
-                    <x-admin.form.toggle name="recaptcha_enabled" label="Enable Google reCAPTCHA v3 Checkpoint" :value="true" help="Protects all public form entries against spam bots." />
-                    
+                <form action="/admin/forms/recaptcha" method="POST" class="space-y-4">
+                    @csrf
+                    <x-admin.form.toggle name="recaptcha_enabled" label="Enable Google reCAPTCHA v3 Checkpoint" :value="(bool) $recaptcha['enabled']" help="Protects all public form entries against spam bots." />
+
                     <hr class="border-slate-200 dark:border-slate-800" />
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <x-admin.form.input name="recaptcha_site" label="reCAPTCHA Site Key" value="6Ld9o8kUAAAAAD3CustomSiteKeyText" />
-                        <x-admin.form.input name="recaptcha_secret" type="password" label="reCAPTCHA Secret Key" value="6Ld9o8kUAAAAAD3SecretKeyValueCustom" />
+                        <x-admin.form.input name="recaptcha_site" label="reCAPTCHA Site Key" :value="$recaptcha['site']" />
+                        <x-admin.form.input name="recaptcha_secret" type="password" label="reCAPTCHA Secret Key" :value="$recaptcha['secret']" />
                     </div>
-                    
-                    <x-admin.form.input name="score_threshold" label="Minimum Spam Score Threshold" type="number" step="0.1" value="0.5" help="Values range from 0.0 (likely bot) to 1.0 (likely human)" />
+
+                    <x-admin.form.input name="score_threshold" label="Minimum Spam Score Threshold" type="number" step="0.1" :value="$recaptcha['threshold']" help="Values range from 0.0 (likely bot) to 1.0 (likely human)" />
 
                     <div class="flex justify-end">
                         <x-admin.button type="submit" variant="primary">

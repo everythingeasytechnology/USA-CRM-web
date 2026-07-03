@@ -13,6 +13,8 @@ class Package extends Model
     protected $fillable = [
         'service_id',
         'name',
+        'slug',
+        'badge',
         'price',
         'original_price',
         'discount_price',
@@ -21,6 +23,12 @@ class Package extends Model
         'delivery_time',
         'revisions',
         'cta_url',
+        'status',
+        'display_order',
+        'is_featured',
+        'support_duration',
+        'tech_stack',
+        'suitable_for',
     ];
 
     protected $casts = [
@@ -28,6 +36,8 @@ class Package extends Model
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
         'discount_price' => 'decimal:2',
+        'status' => 'boolean',
+        'is_featured' => 'boolean',
     ];
 
     public function service(): BelongsTo

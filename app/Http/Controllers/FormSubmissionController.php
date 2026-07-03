@@ -193,6 +193,13 @@ class FormSubmissionController extends Controller
             
             $order = Order::create($validated);
 
+            $order->items()->create([
+                'name' => $validated['service_name'],
+                'quantity' => 1,
+                'unit_price' => $validated['amount'],
+                'line_total' => $validated['amount'],
+            ]);
+
             // Trigger Emails (Both Admin and Customer get Order invoice alert)
             Mail::to(config('mail.from.address', 'finance@everythingeasy.in'))->send(new OrderConfirmation($order));
             Mail::to($validated['email'])->send(new OrderConfirmation($order));

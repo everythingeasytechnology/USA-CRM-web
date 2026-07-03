@@ -1,127 +1,201 @@
 <?php
 
+use App\Http\Controllers\Admin\AddonController;
+use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\BlogController;
+use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\JobApplicationController;
+use App\Http\Controllers\Admin\JobPostingController;
+use App\Http\Controllers\Admin\LeadController;
+use App\Http\Controllers\Admin\LegalPageController;
+use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\NewsletterController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PackageController;
+use App\Http\Controllers\Admin\PageController;
+use App\Http\Controllers\Admin\PaymentGatewayController;
+use App\Http\Controllers\Admin\PopupController;
+use App\Http\Controllers\Admin\SeoController;
+use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SocialLinkController;
+use App\Http\Controllers\Admin\SystemController;
+use App\Http\Controllers\Admin\TeamMemberController;
+use App\Http\Controllers\Admin\TestimonialController;
+use App\Http\Controllers\Admin\UserController;
+use App\Models\NotFoundLog;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect('/admin');
 });
 
+// Admin auth
+Route::get('/admin/login', [AuthController::class, 'showLogin'])->middleware('guest')->name('admin.login');
+Route::post('/admin/login', [AuthController::class, 'login'])->middleware('guest');
+Route::post('/admin/logout', [AuthController::class, 'logout'])->middleware('auth');
+
 // Admin Route Group
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/', function () {
         return view('admin.dashboard');
     });
 
-    Route::get('/login', function () {
-        return view('admin.login');
-    });
+    // Website Settings
+    Route::get('/settings', [SettingController::class, 'index']);
+    Route::put('/settings', [SettingController::class, 'update']);
 
-    Route::get('/settings', function () {
-        return view('admin.settings');
-    });
+    // Social Links
+    Route::get('/social', [SocialLinkController::class, 'index']);
+    Route::put('/social', [SocialLinkController::class, 'update']);
 
-    Route::get('/social', function () {
-        return view('admin.social');
-    });
+    // Services
+    Route::get('/services', [ServiceController::class, 'index']);
+    Route::get('/services/create', [ServiceController::class, 'create']);
+    Route::post('/services', [ServiceController::class, 'store']);
+    Route::get('/services/{service}/edit', [ServiceController::class, 'edit']);
+    Route::put('/services/{service}', [ServiceController::class, 'update']);
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
+    Route::post('/services/{service}/duplicate', [ServiceController::class, 'duplicate']);
+    Route::patch('/services/{service}/toggle-active', [ServiceController::class, 'toggleActive']);
 
-    Route::get('/services', function () {
-        return view('admin.services.index');
-    });
+    // Packages
+    Route::get('/packages', [PackageController::class, 'index']);
+    Route::get('/packages/create', [PackageController::class, 'create']);
+    Route::post('/packages', [PackageController::class, 'store']);
+    Route::get('/packages/{package}/edit', [PackageController::class, 'edit']);
+    Route::put('/packages/{package}', [PackageController::class, 'update']);
+    Route::delete('/packages/{package}', [PackageController::class, 'destroy']);
+    Route::post('/packages/{package}/duplicate', [PackageController::class, 'duplicate']);
+    Route::patch('/packages/{package}/toggle-active', [PackageController::class, 'toggleActive']);
 
-    Route::get('/services/create', function () {
-        return view('admin.services.create');
-    });
+    // Addons
+    Route::get('/addons', [AddonController::class, 'index']);
+    Route::post('/addons', [AddonController::class, 'store']);
+    Route::put('/addons/{addon}', [AddonController::class, 'update']);
+    Route::delete('/addons/{addon}', [AddonController::class, 'destroy']);
+    Route::patch('/addons/{addon}/toggle-active', [AddonController::class, 'toggleActive']);
 
-    Route::get('/packages', function () {
-        return view('admin.packages.index');
-    });
+    // Orders
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
 
-    Route::get('/packages/create', function () {
-        return view('admin.packages.create');
-    });
+    // Payment Gateways
+    Route::get('/payment', [PaymentGatewayController::class, 'index']);
+    Route::put('/payment', [PaymentGatewayController::class, 'update']);
 
-    Route::get('/addons', function () {
-        return view('admin.addons');
-    });
+    // Blogs
+    Route::get('/blogs', [BlogController::class, 'index']);
+    Route::get('/blogs/create', [BlogController::class, 'create']);
+    Route::post('/blogs', [BlogController::class, 'store']);
+    Route::get('/blogs/{blog}/edit', [BlogController::class, 'edit']);
+    Route::put('/blogs/{blog}', [BlogController::class, 'update']);
+    Route::delete('/blogs/{blog}', [BlogController::class, 'destroy']);
+    Route::post('/blogs/{blog}/duplicate', [BlogController::class, 'duplicate']);
+    Route::patch('/blogs/{blog}/toggle-active', [BlogController::class, 'toggleActive']);
 
-    Route::get('/orders', function () {
-        return view('admin.orders.index');
-    });
+    // Media Library
+    Route::get('/media', [MediaController::class, 'index']);
+    Route::post('/media', [MediaController::class, 'store']);
+    Route::put('/media/{media}', [MediaController::class, 'update']);
+    Route::delete('/media/{media}', [MediaController::class, 'destroy']);
 
-    Route::get('/orders/invoice', function () {
-        return view('admin.orders.show');
-    });
+    // Leads
+    Route::get('/leads', [LeadController::class, 'index']);
+    Route::patch('/leads/{lead}', [LeadController::class, 'update']);
 
-    Route::get('/payment', function () {
-        return view('admin.payment');
-    });
+    // Forms / Enquiries
+    Route::get('/forms', [ContactMessageController::class, 'index']);
+    Route::post('/forms/recaptcha', [ContactMessageController::class, 'updateRecaptcha']);
 
-    Route::get('/blogs', function () {
-        return view('admin.blogs.index');
-    });
+    // Static Pages
+    Route::get('/pages', [PageController::class, 'index']);
+    Route::put('/pages/{page}', [PageController::class, 'update']);
+    Route::patch('/pages/{page}/toggle-active', [PageController::class, 'toggleActive']);
 
-    Route::get('/blogs/create', function () {
-        return view('admin.blogs.create');
-    });
+    // Legal Pages
+    Route::get('/legal', [LegalPageController::class, 'index']);
+    Route::put('/legal/{legalPage}', [LegalPageController::class, 'update']);
 
-    Route::get('/media', function () {
-        return view('admin.media');
-    });
+    // SEO: redirects, 404 monitor, locations
+    Route::get('/seo', [SeoController::class, 'index']);
+    Route::post('/seo/redirects', [SeoController::class, 'storeRedirect']);
+    Route::delete('/seo/redirects/{redirect}', [SeoController::class, 'destroyRedirect']);
+    Route::post('/seo/404-logs/{log}/convert', [SeoController::class, 'convertLogToRedirect']);
+    Route::delete('/seo/404-logs/{log}', [SeoController::class, 'destroyLog']);
+    Route::post('/seo/locations', [SeoController::class, 'storeLocation']);
+    Route::delete('/seo/locations/{location}', [SeoController::class, 'destroyLocation']);
+    Route::post('/seo/locations/import', [SeoController::class, 'importLocations']);
 
-    Route::get('/leads', function () {
-        return view('admin.leads.index');
-    });
+    // Testimonials
+    Route::get('/testimonials', [TestimonialController::class, 'index']);
+    Route::post('/testimonials', [TestimonialController::class, 'store']);
+    Route::put('/testimonials/{testimonial}', [TestimonialController::class, 'update']);
+    Route::delete('/testimonials/{testimonial}', [TestimonialController::class, 'destroy']);
+    Route::patch('/testimonials/{testimonial}/toggle-active', [TestimonialController::class, 'toggleActive']);
 
-    Route::get('/forms', function () {
-        return view('admin.forms');
-    });
+    // Team Members
+    Route::get('/team', [TeamMemberController::class, 'index']);
+    Route::post('/team', [TeamMemberController::class, 'store']);
+    Route::put('/team/{team}', [TeamMemberController::class, 'update']);
+    Route::delete('/team/{team}', [TeamMemberController::class, 'destroy']);
 
-    Route::get('/pages', function () {
-        return view('admin.pages.index');
-    });
+    // FAQs
+    Route::get('/faqs', [FaqController::class, 'index']);
+    Route::post('/faqs', [FaqController::class, 'store']);
+    Route::put('/faqs/{faq}', [FaqController::class, 'update']);
+    Route::delete('/faqs/{faq}', [FaqController::class, 'destroy']);
+    Route::patch('/faqs/{faq}/toggle-active', [FaqController::class, 'toggleActive']);
 
-    Route::get('/legal', function () {
-        return view('admin.legal');
-    });
+    // Newsletter
+    Route::get('/newsletter', [NewsletterController::class, 'index']);
+    Route::patch('/newsletter/{newsletter}/toggle-status', [NewsletterController::class, 'toggleStatus']);
 
-    Route::get('/seo', function () {
-        return view('admin.seo.index');
-    });
+    // Popups
+    Route::get('/popups', [PopupController::class, 'index']);
+    Route::post('/popups', [PopupController::class, 'store']);
+    Route::put('/popups/{popup}', [PopupController::class, 'update']);
+    Route::delete('/popups/{popup}', [PopupController::class, 'destroy']);
+    Route::patch('/popups/{popup}/toggle-active', [PopupController::class, 'toggleActive']);
 
-    Route::get('/testimonials', function () {
-        return view('admin.testimonials');
-    });
+    // Users & Roles
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::put('/users/{user}', [UserController::class, 'update']);
+    Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
-    Route::get('/team', function () {
-        return view('admin.team');
-    });
+    // System Control
+    Route::get('/system', [SystemController::class, 'index']);
+    Route::post('/system/cache/{type}', [SystemController::class, 'clearCache']);
 
-    Route::get('/faqs', function () {
-        return view('admin.faqs');
-    });
-
-    Route::get('/newsletter', function () {
-        return view('admin.newsletter');
-    });
-
-    Route::get('/popups', function () {
-        return view('admin.popups');
-    });
-
-    Route::get('/users', function () {
-        return view('admin.users');
-    });
-
-    Route::get('/system', function () {
-        return view('admin.system');
-    });
-
-    Route::get('/careers', function () {
-        return view('admin.careers');
-    });
+    // Careers: Job Postings & Applications
+    Route::get('/careers', [JobPostingController::class, 'index']);
+    Route::post('/careers/jobs', [JobPostingController::class, 'store']);
+    Route::put('/careers/jobs/{jobPosting}', [JobPostingController::class, 'update']);
+    Route::delete('/careers/jobs/{jobPosting}', [JobPostingController::class, 'destroy']);
+    Route::patch('/careers/jobs/{jobPosting}/toggle-active', [JobPostingController::class, 'toggleActive']);
+    Route::patch('/careers/applications/{jobApplication}/status', [JobApplicationController::class, 'updateStatus']);
 });
 
+// Public form submissions
 Route::post('/submit-contact', [App\Http\Controllers\FormSubmissionController::class, 'submitContact']);
 Route::post('/submit-lead', [App\Http\Controllers\FormSubmissionController::class, 'submitLead']);
 Route::post('/submit-application', [App\Http\Controllers\FormSubmissionController::class, 'submitApplication']);
 Route::post('/submit-order', [App\Http\Controllers\FormSubmissionController::class, 'submitOrder']);
+
+// Catch unmatched public URLs to power the 404 monitor
+Route::fallback(function () {
+    $path = '/'.ltrim(request()->path(), '/');
+
+    if (! str_starts_with($path, '/admin')) {
+        $log = NotFoundLog::firstOrNew(['url_path' => $path]);
+        $log->referrer = request()->headers->get('referer');
+        $log->hit_count = ($log->exists ? $log->hit_count : 0) + 1;
+        $log->last_hit_at = now();
+        $log->save();
+    }
+
+    abort(404);
+});

@@ -3,7 +3,7 @@
         <x-admin.breadcrumbs :items="[['label' => 'Careers Portal openings & Applications']]" />
     </x-slot:breadcrumbs>
 
-    <div class="space-y-6" x-data="{ activeTab: 'openings', openModal: false, selectedJob: { title: '', location: '', desc: '', reqs: '' }, selectedCandidate: { name: '', email: '', phone: '', exp: '', portfolio: '', resume: '', cover: '', position: '' } }">
+    <div class="space-y-6" x-data="{ activeTab: 'openings', openModal: false, selectedJob: { id: null, title: '', location: '', desc: '', reqs: '' }, selectedCandidate: { id: null, name: '', email: '', phone: '', exp: '', portfolio: '', resume: '', cover: '', position: '' } }">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -18,7 +18,7 @@
                 </button>
                 <button type="button" @click="activeTab = 'applications'" :class="activeTab === 'applications' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold' : 'text-slate-505'" class="px-3 py-1.5 rounded-md cursor-pointer flex items-center gap-1.5">
                     <span>Candidate Applications</span>
-                    <span class="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/10 text-blue-650 text-3xs">3</span>
+                    <span class="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/10 text-blue-650 text-3xs">{{ $candidates->count() }}</span>
                 </button>
             </div>
         </div>
@@ -28,7 +28,7 @@
             <x-admin.card title="Job Vacancies Directory">
                 <x-slot:actions>
                     <x-admin.button variant="primary" size="xs" @click="
-                        selectedJob = { title: '', location: '', desc: '', reqs: '' };
+                        selectedJob = { id: null, title: '', location: '', desc: '', reqs: '' };
                         $dispatch('open-modal', 'job-modal');
                     ">
                         <x-admin.icon name="plus" class="w-4 h-4 mr-1.5" />
@@ -37,10 +37,6 @@
                 </x-slot:actions>
 
                 <x-admin.table :headers="['Job Details', 'Location / Mode', 'Short Description', 'Requirements Summary', 'Status', 'Actions']">
-                    @php
-                        $jobs = \App\Models\JobPosting::all();
-                    @endphp
-
                     @forelse ($jobs as $job)
                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
                             <td class="px-6 py-4">
@@ -67,15 +63,17 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <x-admin.form.toggle name="job_status_{{ $loop->index }}" :value="$job->status" />
+                                <x-admin.toggle-form :action="'/admin/careers/jobs/'.$job->id.'/toggle-active'" :active="$job->status" />
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex gap-1.5">
-                                    <x-admin.button 
-                                        variant="ghost" 
+                                    <x-admin.button
+                                        type="button"
+                                        variant="ghost"
                                         size="xs"
                                         @click="
                                             selectedJob = {
+                                                id: {{ $job->id }},
                                                 title: '{{ addslashes($job->title) }}',
                                                 location: '{{ addslashes($job->location) }}',
                                                 desc: '{{ addslashes($job->description) }}',
@@ -87,7 +85,9 @@
                                     >
                                         <x-admin.icon name="pencil" class="w-4 h-4 text-slate-500" />
                                     </x-admin.button>
-                                    <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:bg-red-50" @click="alert('Delete opening')" title="Delete Job"><x-admin.icon name="trash" class="w-4 h-4" /></x-admin.button>
+                                    <x-admin.delete-form :action="'/admin/careers/jobs/'.$job->id" confirm="Delete this job posting permanently?">
+                                        <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer" title="Delete Job"><x-admin.icon name="trash" class="w-4 h-4" /></button>
+                                    </x-admin.delete-form>
                                 </div>
                             </td>
                         </tr>
@@ -106,10 +106,6 @@
         <div x-show="activeTab === 'applications'" class="space-y-6" style="display: none;">
             <x-admin.card title="Job Applications Log" subtitle="Track and audit profiles, CV downloads, and experience credentials of incoming candidates.">
                 <x-admin.table :headers="['Candidate Details', 'Applied Position', 'Experience', 'Portfolio URL', 'Resume (PDF)', 'Actions']">
-                    @php
-                        $candidates = \App\Models\JobApplication::latest()->get();
-                    @endphp
-
                     @forelse ($candidates as $candidate)
                         <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
                             <td class="px-6 py-4">
@@ -137,11 +133,13 @@
                                 </a>
                             </td>
                             <td class="px-6 py-4">
-                                <x-admin.button 
-                                    variant="secondary" 
+                                <x-admin.button
+                                    type="button"
+                                    variant="secondary"
                                     size="xs"
                                     @click="
                                         selectedCandidate = {
+                                            id: {{ $candidate->id }},
                                             name: '{{ addslashes($candidate->name) }}',
                                             email: '{{ addslashes($candidate->email) }}',
                                             phone: '{{ addslashes($candidate->phone) }}',
@@ -171,7 +169,9 @@
 
         <!-- Manage Job Modal Form -->
         <x-admin.modal name="job-modal" title="Manage Career Posting" maxW="lg">
-            <form action="#save-job" class="space-y-4" @submit.prevent="$dispatch('close-modal')">
+            <form id="job-form" :action="selectedJob.id ? '/admin/careers/jobs/' + selectedJob.id : '/admin/careers/jobs'" method="POST" class="space-y-4">
+                @csrf
+                <template x-if="selectedJob.id"><input type="hidden" name="_method" value="PUT"></template>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <x-admin.form.input name="job_title" label="Job Posting Title" placeholder="e.g. Senior Web Developer" x-bind:value="selectedJob.title" :required="true" />
                     <x-admin.form.input name="job_location" label="Location / Workspace mode" placeholder="e.g. Remote, USA" x-bind:value="selectedJob.location" :required="true" />
@@ -187,12 +187,11 @@
                 <div class="flex items-center gap-3">
                     <x-admin.form.toggle name="job_published" label="Active / Open for applications" :value="true" />
                 </div>
-
-                <x-slot:footer>
-                    <x-admin.button type="submit" variant="primary" size="sm">Save Posting</x-admin.button>
-                    <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
-                </x-slot:footer>
             </form>
+            <x-slot:footer>
+                <x-admin.button type="submit" form="job-form" variant="primary" size="sm">Save Posting</x-admin.button>
+                <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
+            </x-slot:footer>
         </x-admin.modal>
 
         <!-- Candidate Application Details Drawer -->
@@ -242,9 +241,14 @@
                 </div>
             </div>
 
+            <form :action="selectedCandidate.id ? '/admin/careers/applications/' + selectedCandidate.id + '/status' : ''" method="POST" id="candidate-status-form">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="status" value="shortlisted">
+            </form>
             <x-slot:footer>
-                <x-admin.button variant="primary" size="sm" @click="alert('Candidate status set to shortlisted!'); $dispatch('close-drawer')">Shortlist Candidate</x-admin.button>
-                <x-admin.button variant="secondary" size="sm" @click="$dispatch('close-drawer')">Close</x-admin.button>
+                <x-admin.button type="submit" form="candidate-status-form" variant="primary" size="sm">Shortlist Candidate</x-admin.button>
+                <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-drawer')">Close</x-admin.button>
             </x-slot:footer>
         </x-admin.drawer>
     </div>

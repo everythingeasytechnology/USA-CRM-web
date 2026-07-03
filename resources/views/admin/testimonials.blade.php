@@ -20,25 +20,17 @@
 
         <!-- Testimonials Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @php
-                $testimonials = [
-                    ['name' => 'Sherlock Holmes', 'org' => 'Watson Consultancy Group', 'review' => 'Anti Gravity CMS is incredibly fast. The JSON-LD schema generators and instant sitemaps boosted our SEO ranking significantly. Excellent UX simple layout.', 'rating' => 5, 'status' => true],
-                    ['name' => 'Adler Irene', 'org' => 'Opera Bohemia Inc.', 'review' => 'Managing services packages and coupon discount checkouts has never been this simple. Reusable blade configurations saved us hundreds of dev hours.', 'rating' => 5, 'status' => true],
-                    ['name' => 'Mycroft Holmes', 'org' => 'Diogenes Government Registry', 'review' => 'Simple UI setup with class-based dark mode toggles. Meets all compliance security parameters. Highly stable CMS core.', 'rating' => 4, 'status' => false],
-                ];
-            @endphp
-
-            @foreach ($testimonials as $review)
+            @forelse ($testimonials as $review)
                 <x-admin.card :padding="true" class="flex flex-col justify-between h-full relative group">
                     <x-slot:actions>
-                        <x-admin.form.toggle name="tst_active_{{ $loop->index }}" :value="$review['status']" />
+                        <x-admin.toggle-form :action="'/admin/testimonials/'.$review->id.'/toggle-active'" :active="$review->is_active" />
                     </x-slot:actions>
-                    
+
                     <div class="space-y-4">
                         <!-- Rating Stars -->
                         <div class="flex items-center text-amber-400 gap-0.5">
                             @for ($i = 1; $i <= 5; $i++)
-                                <svg class="w-4.5 h-4.5 {{ $i <= $review['rating'] ? 'fill-current' : 'text-slate-200' }}" viewBox="0 0 20 20">
+                                <svg class="w-4.5 h-4.5 {{ $i <= $review->rating ? 'fill-current' : 'text-slate-200' }}" viewBox="0 0 20 20">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                             @endfor
@@ -46,30 +38,43 @@
 
                         <!-- Review Text -->
                         <p class="text-xs text-slate-600 dark:text-slate-350 italic leading-relaxed">
-                            "{{ $review['review'] }}"
+                            "{{ $review->review }}"
                         </p>
                     </div>
 
                     <!-- Client Profile -->
-                    <div class="flex items-center gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-6">
-                        <div class="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-300">
-                            {{ $review['name'][0] }}
+                    <div class="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-6">
+                        <div class="flex items-center gap-3">
+                            <div class="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-300">
+                                {{ strtoupper($review->name[0]) }}
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-900 dark:text-white block">{{ $review->name }}</span>
+                                <span class="text-[10px] text-slate-500 block mt-0.5">{{ $review->company }}</span>
+                            </div>
                         </div>
-                        <div>
-                            <span class="text-xs font-bold text-slate-900 dark:text-white block">{{ $review['name'] }}</span>
-                            <span class="text-[10px] text-slate-500 block mt-0.5">{{ $review['org'] }}</span>
+                        <div class="flex items-center gap-1">
+                            <x-admin.button type="button" variant="ghost" size="xs" @click="$dispatch('open-modal', 'testimonial-edit-modal-{{ $review->id }}')">
+                                <x-admin.icon name="pencil" class="w-3.5 h-3.5 text-slate-500" />
+                            </x-admin.button>
+                            <x-admin.delete-form :action="'/admin/testimonials/'.$review->id" confirm="Delete this testimonial permanently?">
+                                <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"><x-admin.icon name="trash" class="w-3.5 h-3.5" /></button>
+                            </x-admin.delete-form>
                         </div>
                     </div>
                 </x-admin.card>
-            @endforeach
+            @empty
+                <div class="col-span-full text-center text-xs text-slate-400 py-12">No testimonials added yet.</div>
+            @endforelse
         </div>
 
         <!-- Add Testimonial Modal -->
-        <x-admin.modal name="testimonial-modal" title="Manage Client Review" maxW="md">
-            <form action="#save-testimonial" class="space-y-4" @submit.prevent="$dispatch('close-modal')">
+        <x-admin.modal name="testimonial-modal" title="Add Client Review" maxW="md">
+            <form id="testimonial-create-form" action="/admin/testimonials" method="POST" class="space-y-4">
+                @csrf
                 <x-admin.form.input name="client_name" label="Client Name" placeholder="e.g. John Watson" :required="true" />
-                <x-admin.form.input name="client_company" label="Designation & Organization" placeholder="e.g. CEO, Watson Agency" :required="true" />
-                
+                <x-admin.form.input name="client_company" label="Designation & Organization" placeholder="e.g. CEO, Watson Agency" />
+
                 <x-admin.form.select name="client_rating" label="Rating Score">
                     <option value="5">★★★★★ (5 Stars)</option>
                     <option value="4">★★★★☆ (4 Stars)</option>
@@ -77,16 +82,45 @@
                 </x-admin.form.select>
 
                 <x-admin.form.textarea name="client_review" label="Review Content" placeholder="Paste client endorsement content..." :rows="4" :required="true" />
-                
+
                 <div class="flex items-center gap-3">
                     <x-admin.form.toggle name="client_status_active" label="Enabled / Visible" :value="true" />
                 </div>
-                
+            </form>
+            <x-slot:footer>
+                <x-admin.button type="submit" form="testimonial-create-form" variant="primary" size="sm">Save Review</x-admin.button>
+                <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
+            </x-slot:footer>
+        </x-admin.modal>
+
+        <!-- Edit Modals -->
+        @foreach ($testimonials as $review)
+            <x-admin.modal name="testimonial-edit-modal-{{ $review->id }}" title="Edit Client Review" maxW="md">
+                <form id="testimonial-edit-form-{{ $review->id }}" action="/admin/testimonials/{{ $review->id }}" method="POST" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <x-admin.form.input name="client_name" label="Client Name" :value="$review->name" :required="true" />
+                    <x-admin.form.input name="client_company" label="Designation & Organization" :value="$review->company" />
+
+                    <x-admin.form.select name="client_rating" label="Rating Score">
+                        <option value="5" @selected($review->rating === 5)>★★★★★ (5 Stars)</option>
+                        <option value="4" @selected($review->rating === 4)>★★★★☆ (4 Stars)</option>
+                        <option value="3" @selected($review->rating === 3)>★★★☆☆ (3 Stars)</option>
+                        <option value="2" @selected($review->rating === 2)>★★☆☆☆ (2 Stars)</option>
+                        <option value="1" @selected($review->rating === 1)>★☆☆☆☆ (1 Star)</option>
+                    </x-admin.form.select>
+
+                    <x-admin.form.textarea name="client_review" label="Review Content" :rows="4" :value="$review->review" :required="true" />
+
+                    <div class="flex items-center gap-3">
+                        <x-admin.form.toggle name="client_status_active" label="Enabled / Visible" :value="$review->is_active" />
+                    </div>
+                </form>
                 <x-slot:footer>
-                    <x-admin.button type="submit" variant="primary" size="sm">Save Review</x-admin.button>
+                    <x-admin.button type="submit" form="testimonial-edit-form-{{ $review->id }}" variant="primary" size="sm">Save Changes</x-admin.button>
                     <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
                 </x-slot:footer>
-            </form>
-        </x-admin.modal>
+            </x-admin.modal>
+        @endforeach
     </div>
 </x-layouts.admin>

@@ -49,58 +49,52 @@
 
         <!-- Blogs List table -->
         <x-admin.card :padding="false">
-            <x-admin.table :headers="['Article Title', 'Category', 'Author & Time', 'Publish Date', 'Status', 'SEO Score', 'Actions']">
-                @php
-                    $blogs = [
-                        ['title' => '10 Steps to Migrate to Laravel 12 Viewports', 'cat' => 'Web Development', 'author' => 'Akhil Golu', 'time' => '5 min', 'date' => '2026-07-01', 'status' => true, 'score' => '96%'],
-                        ['title' => 'Understanding JSON-LD Organization Schema Rules', 'cat' => 'SEO Insights', 'author' => 'Sarah Connor', 'time' => '8 min', 'date' => '2026-06-28', 'status' => true, 'score' => '92%'],
-                        ['title' => 'Designing UI Dashboards like Shopify Admin Layouts', 'cat' => 'Digital Growth', 'author' => 'Diana Prince', 'time' => '4 min', 'date' => '2026-06-25', 'status' => true, 'score' => '81%'],
-                        ['title' => 'AI Automation: Resolving Client FAQ Nodes with Bots', 'cat' => 'Web Development', 'author' => 'Bruce Wayne', 'time' => '6 min', 'date' => 'Draft', 'status' => false, 'score' => '89%'],
-                    ];
-                @endphp
-
-                @foreach ($blogs as $post)
+            <x-admin.table :headers="['Article Title', 'Category', 'Read Time', 'Publish Date', 'Status', 'Actions']">
+                @forelse ($blogs as $post)
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
                         <td class="px-6 py-4 max-w-xs sm:max-w-md">
-                            <span class="font-bold text-slate-900 dark:text-white text-xs block truncate" title="{{ $post['title'] }}">{{ $post['title'] }}</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">/blog/{{ Str::slug($post['title']) }}</span>
+                            <span class="font-bold text-slate-900 dark:text-white text-xs block truncate" title="{{ $post->title }}">{{ $post->title }}</span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5">/blog/{{ $post->slug }}</span>
                         </td>
                         <td class="px-6 py-4 text-xs text-slate-700 dark:text-slate-350">
-                            {{ $post['cat'] }}
+                            {{ $post->category }}
                         </td>
-                        <td class="px-6 py-4">
-                            <span class="text-xs text-slate-800 dark:text-slate-200 block">{{ $post['author'] }}</span>
-                            <span class="text-[10px] text-slate-450 block mt-0.5">{{ $post['time'] }} reading time</span>
+                        <td class="px-6 py-4 text-xs text-slate-450">
+                            {{ $post->read_time }}
                         </td>
                         <td class="px-6 py-4 text-xs text-slate-650 dark:text-slate-400">
-                            {{ $post['date'] }}
+                            {{ $post->created_at->format('Y-m-d') }}
                         </td>
                         <td class="px-6 py-4">
-                            <x-admin.form.toggle name="blog_active_{{ $loop->index }}" :value="$post['status']" />
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-bold font-mono bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-255/10">
-                                {{ $post['score'] }}
-                            </span>
+                            <x-admin.toggle-form :action="'/admin/blogs/'.$post->id.'/toggle-active'" :active="$post->is_published" />
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-1">
-                                <x-admin.button variant="ghost" size="xs" href="/admin/blogs/create" title="Edit Article">
+                                <x-admin.button variant="ghost" size="xs" href="/admin/blogs/{{ $post->id }}/edit" title="Edit Article">
                                     <x-admin.icon name="pencil" class="w-4 h-4 text-slate-500" />
                                 </x-admin.button>
-                                <x-admin.button variant="ghost" size="xs" @click="alert('Article duplicated!')" title="Duplicate Article">
-                                    <x-admin.icon name="duplicate" class="w-4 h-4 text-slate-500" />
-                                </x-admin.button>
-                                <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30" @click="alert('Delete Confirmation')" title="Delete Article">
-                                    <x-admin.icon name="trash" class="w-4 h-4" />
-                                </x-admin.button>
+                                <form method="POST" action="/admin/blogs/{{ $post->id }}/duplicate">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" title="Duplicate Article">
+                                        <x-admin.icon name="duplicate" class="w-4 h-4 text-slate-500" />
+                                    </button>
+                                </form>
+                                <x-admin.delete-form :action="'/admin/blogs/'.$post->id" confirm="Delete this article permanently?">
+                                    <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer" title="Delete Article">
+                                        <x-admin.icon name="trash" class="w-4 h-4" />
+                                    </button>
+                                </x-admin.delete-form>
                             </div>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-xs text-slate-400">No articles written yet.</td>
+                    </tr>
+                @endforelse
             </x-admin.table>
-            
-            <x-admin.pagination :currentPage="1" :totalPages="3" :totalResults="12" :perPage="4" />
+
+            <x-admin.pagination :currentPage="1" :totalPages="1" :totalResults="$blogs->count()" :perPage="max($blogs->count(), 1)" />
         </x-admin.card>
     </div>
 </x-layouts.admin>

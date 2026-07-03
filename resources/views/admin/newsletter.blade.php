@@ -23,10 +23,6 @@
         <!-- Subscribers Table -->
         <x-admin.card :padding="false">
             <x-admin.table :headers="['Subscriber Email', 'Date Subscribed', 'Referral Path', 'Status', 'Actions']">
-                @php
-                    $subs = \App\Models\NewsletterSubscriber::latest()->get();
-                @endphp
-
                 @forelse ($subs as $sub)
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
                         <td class="px-6 py-4 font-semibold text-xs text-slate-900 dark:text-white font-mono">
@@ -44,9 +40,13 @@
                             </x-admin.badge>
                         </td>
                         <td class="px-6 py-4">
-                            <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:bg-red-50" @click="alert('Unsubscribe user')">
-                                <x-admin.icon name="x-mark" class="w-4 h-4" />
-                            </x-admin.button>
+                            <form method="POST" action="/admin/newsletter/{{ $sub->id }}/toggle-status" onsubmit="return confirm('{{ $sub->status ? 'Unsubscribe this email?' : 'Resubscribe this email?' }}')">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer">
+                                    <x-admin.icon name="x-mark" class="w-4 h-4" />
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 @empty
@@ -57,8 +57,8 @@
                     </tr>
                 @endforelse
             </x-admin.table>
-            
-            <x-admin.pagination :currentPage="1" :totalPages="20" :totalResults="100" :perPage="4" />
+
+            <x-admin.pagination :currentPage="1" :totalPages="1" :totalResults="$subs->count()" :perPage="max($subs->count(), 1)" />
         </x-admin.card>
     </div>
 </x-layouts.admin>

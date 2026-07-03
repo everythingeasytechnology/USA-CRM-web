@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{{ $title ?? 'Anti Gravity CMS Notification' }}</title>
+    <title>{{ $title ?? 'EverythingEasy Notification' }}</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 40px 20px; }
         .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
@@ -23,13 +23,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Anti Gravity CMS</h1>
+            <h1>EverythingEasy</h1>
         </div>
         <div class="content">
             @yield('content')
         </div>
         <div class="footer">
-            <p>Sent automatically by Anti Gravity CMS. © {{ date('Y') }} EverythingEasy. All rights reserved.</p>
+            <p>Sent automatically by EverythingEasy. © {{ date('Y') }} EverythingEasy. All rights reserved.</p>
         </div>
     </div>
 </body>

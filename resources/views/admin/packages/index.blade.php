@@ -50,10 +50,6 @@
         <!-- Packages Table -->
         <x-admin.card :padding="false">
             <x-admin.table :headers="['Package / Code', 'Related Service', 'Starting Price', 'Original Price', 'Badge', 'Status', 'Actions']">
-                @php
-                    $packages = \App\Models\Package::with('service')->get();
-                @endphp
-
                 @forelse ($packages as $pkg)
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
                         <td class="px-6 py-4">
@@ -77,19 +73,24 @@
                             @endif
                         </td>
                         <td class="px-6 py-4">
-                            <x-admin.form.toggle name="pkg_active_{{ $loop->index }}" :value="true" />
+                            <x-admin.toggle-form :action="'/admin/packages/'.$pkg->id.'/toggle-active'" :active="$pkg->status" />
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-1">
-                                <x-admin.button variant="ghost" size="xs" href="/admin/packages/create" title="Edit Package">
+                                <x-admin.button variant="ghost" size="xs" href="/admin/packages/{{ $pkg->id }}/edit" title="Edit Package">
                                     <x-admin.icon name="pencil" class="w-4 h-4 text-slate-500" />
                                 </x-admin.button>
-                                <x-admin.button variant="ghost" size="xs" @click="alert('Package duplicated successfully!')" title="Duplicate Package">
-                                    <x-admin.icon name="duplicate" class="w-4 h-4 text-slate-500" />
-                                </x-admin.button>
-                                <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30" @click="alert('Delete Confirmation')" title="Delete Package">
-                                    <x-admin.icon name="trash" class="w-4 h-4" />
-                                </x-admin.button>
+                                <form method="POST" action="/admin/packages/{{ $pkg->id }}/duplicate">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" title="Duplicate Package">
+                                        <x-admin.icon name="duplicate" class="w-4 h-4 text-slate-500" />
+                                    </button>
+                                </form>
+                                <x-admin.delete-form :action="'/admin/packages/'.$pkg->id" confirm="Delete this package permanently?">
+                                    <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:text-red-650 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer" title="Delete Package">
+                                        <x-admin.icon name="trash" class="w-4 h-4" />
+                                    </button>
+                                </x-admin.delete-form>
                             </div>
                         </td>
                     </tr>
@@ -102,7 +103,7 @@
                 @endforelse
             </x-admin.table>
             
-            <x-admin.pagination :currentPage="1" :totalPages="3" :totalResults="15" :perPage="5" />
+            <x-admin.pagination :currentPage="1" :totalPages="1" :totalResults="$packages->count()" :perPage="max($packages->count(), 1)" />
         </x-admin.card>
     </div>
 </x-layouts.admin>

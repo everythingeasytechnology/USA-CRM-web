@@ -14,11 +14,13 @@
 
         <!-- Filters & Statistics widgets -->
         <x-admin.card>
-            <div class="flex flex-wrap items-center justify-between gap-4">
+            <form method="GET" action="/admin/orders" class="flex flex-wrap items-center justify-between gap-4">
                 <div class="w-full sm:max-w-xs relative">
-                    <input 
-                        type="text" 
-                        placeholder="Search orders..." 
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Search orders..."
                         class="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
                     />
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -27,32 +29,23 @@
                 </div>
 
                 <div class="flex items-center gap-2.5 flex-wrap">
-                    <select class="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-300">
+                    <select name="status" class="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-300">
                         <option value="">Payment Status</option>
-                        <option value="paid">Paid</option>
-                        <option value="pending">Pending</option>
-                        <option value="refunded">Refunded</option>
+                        <option value="paid" @selected(request('status') === 'paid')>Paid</option>
+                        <option value="pending" @selected(request('status') === 'pending')>Pending</option>
+                        <option value="refunded" @selected(request('status') === 'refunded')>Refunded</option>
+                        <option value="failed" @selected(request('status') === 'failed')>Failed</option>
                     </select>
-                    <select class="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-300">
-                        <option value="">Order Status</option>
-                        <option value="new">New</option>
-                        <option value="processing">Processing</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                    <x-admin.button variant="secondary" size="sm">
-                        Export CSV
+                    <x-admin.button type="submit" variant="secondary" size="sm">
+                        Filter
                     </x-admin.button>
                 </div>
-            </div>
+            </form>
         </x-admin.card>
 
         <!-- Orders list log -->
         <x-admin.card :padding="false">
             <x-admin.table :headers="['Order ID', 'Customer Details', 'Package Purchased', 'Amount', 'Payment', 'Order Status', 'Actions']">
-                @php
-                    $orders = \App\Models\Order::latest()->get();
-                @endphp
-
                 @forelse ($orders as $order)
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
                         <td class="px-6 py-4 font-mono text-xs font-bold text-slate-900 dark:text-white">
@@ -89,7 +82,7 @@
                             @endif
                         </td>
                         <td class="px-6 py-4">
-                            <x-admin.button variant="secondary" size="xs" href="/admin/orders/invoice" title="View Invoice">
+                            <x-admin.button variant="secondary" size="xs" href="/admin/orders/{{ $order->id }}" title="View Invoice">
                                 <x-admin.icon name="eye" class="w-4 h-4 mr-1.5" />
                                 <span>Invoice</span>
                             </x-admin.button>
@@ -103,8 +96,8 @@
                     </tr>
                 @endforelse
             </x-admin.table>
-            
-            <x-admin.pagination :currentPage="1" :totalPages="8" :totalResults="40" :perPage="5" />
+
+            <x-admin.pagination :currentPage="1" :totalPages="1" :totalResults="$orders->count()" :perPage="max($orders->count(), 1)" />
         </x-admin.card>
     </div>
 </x-layouts.admin>

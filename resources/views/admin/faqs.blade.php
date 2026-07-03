@@ -30,51 +30,49 @@
             </div>
         </x-admin.card>
 
-        @php
-            $faqs = [
-                ['q' => 'What payment methods do you support for checkouts?', 'a' => 'We integrate Stripe, PayPal, Razorpay, and direct UPI transfers with sandbox toggles.', 'cat' => 'pricing', 'status' => true],
-                ['q' => 'How does the sitemap regeneration operate?', 'a' => 'Anti Gravity CMS generates sitemaps weekly or automatically index-pushes via IndexNow API.', 'cat' => 'technical', 'status' => true],
-                ['q' => 'Can I customize the primary and secondary branding colors?', 'a' => 'Yes. Admin Settings allows toggling accent colors via full spectrum color pickers.', 'cat' => 'general', 'status' => true],
-                ['q' => 'Are legal policies compliance-ready?', 'a' => 'We support rich text revisions history logs for privacy and return policies.', 'cat' => 'general', 'status' => false],
-            ];
-        @endphp
-
         <!-- Accordions lists -->
         <x-admin.card :padding="false">
             <x-admin.table :headers="['Question Title', 'Answer Content', 'Category Group', 'Status', 'Actions']">
-                @foreach ($faqs as $faq)
-                    <tr 
-                        x-show="activeCategory === 'all' || activeCategory === '{{ $faq['cat'] }}'" 
+                @forelse ($faqs as $faq)
+                    <tr
+                        x-show="activeCategory === 'all' || activeCategory === '{{ $faq->category }}'"
                         class="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors"
                     >
                         <td class="px-6 py-4 font-bold text-xs text-slate-850 dark:text-white max-w-xxs truncate">
-                            {{ $faq['q'] }}
+                            {{ $faq->question }}
                         </td>
                         <td class="px-6 py-4 text-xs text-slate-550 dark:text-slate-400 max-w-xs truncate">
-                            {{ $faq['a'] }}
+                            {{ $faq->answer }}
                         </td>
                         <td class="px-6 py-4 text-2xs font-semibold capitalize text-slate-500">
-                            {{ $faq['cat'] }}
+                            {{ $faq->category }}
                         </td>
                         <td class="px-6 py-4">
-                            <x-admin.form.toggle name="faq_active_{{ $loop->index }}" :value="$faq['status']" />
+                            <x-admin.toggle-form :action="'/admin/faqs/'.$faq->id.'/toggle-active'" :active="$faq->is_active" />
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex gap-1.5">
-                                <x-admin.button variant="ghost" size="xs" @click="$dispatch('open-modal', 'faq-modal')" title="Edit FAQ"><x-admin.icon name="pencil" class="w-4 h-4 text-slate-500" /></x-admin.button>
-                                <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:bg-red-50" @click="alert('Delete')" title="Delete FAQ"><x-admin.icon name="trash" class="w-4 h-4" /></x-admin.button>
+                                <x-admin.button type="button" variant="ghost" size="xs" @click="$dispatch('open-modal', 'faq-edit-modal-{{ $faq->id }}')" title="Edit FAQ"><x-admin.icon name="pencil" class="w-4 h-4 text-slate-500" /></x-admin.button>
+                                <x-admin.delete-form :action="'/admin/faqs/'.$faq->id" confirm="Delete this FAQ permanently?">
+                                    <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer" title="Delete FAQ"><x-admin.icon name="trash" class="w-4 h-4" /></button>
+                                </x-admin.delete-form>
                             </div>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-xs text-slate-400">No FAQs created yet.</td>
+                    </tr>
+                @endforelse
             </x-admin.table>
         </x-admin.card>
 
-        <!-- FAQ Modal Form -->
-        <x-admin.modal name="faq-modal" title="Manage FAQ Item" maxW="md">
-            <form action="#save-faq" class="space-y-4" @submit.prevent="$dispatch('close-modal')">
+        <!-- FAQ Modal Form (Create) -->
+        <x-admin.modal name="faq-modal" title="Add FAQ Item" maxW="md">
+            <form id="faq-create-form" action="/admin/faqs" method="POST" class="space-y-4">
+                @csrf
                 <x-admin.form.input name="faq_question" label="FAQ Question" placeholder="e.g. What is your refund policy?" :required="true" />
-                
+
                 <x-admin.form.select name="faq_cat" label="FAQ Category" :required="true">
                     <option value="general">General Queries</option>
                     <option value="pricing">Pricing & Refunds</option>
@@ -82,16 +80,42 @@
                 </x-admin.form.select>
 
                 <x-admin.form.textarea name="faq_answer" label="FAQ Answer" placeholder="Write full explanatory answer details..." :rows="4" :required="true" />
-                
+
                 <div class="flex items-center gap-3">
                     <x-admin.form.toggle name="faq_visible" label="Enabled / Visible" :value="true" />
                 </div>
-                
+            </form>
+            <x-slot:footer>
+                <x-admin.button type="submit" form="faq-create-form" variant="primary" size="sm">Save FAQ</x-admin.button>
+                <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
+            </x-slot:footer>
+        </x-admin.modal>
+
+        <!-- Edit Modals -->
+        @foreach ($faqs as $faq)
+            <x-admin.modal name="faq-edit-modal-{{ $faq->id }}" title="Edit FAQ Item" maxW="md">
+                <form id="faq-edit-form-{{ $faq->id }}" action="/admin/faqs/{{ $faq->id }}" method="POST" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <x-admin.form.input name="faq_question" label="FAQ Question" :value="$faq->question" :required="true" />
+
+                    <x-admin.form.select name="faq_cat" label="FAQ Category" :required="true">
+                        <option value="general" @selected($faq->category === 'general')>General Queries</option>
+                        <option value="pricing" @selected($faq->category === 'pricing')>Pricing & Refunds</option>
+                        <option value="technical" @selected($faq->category === 'technical')>Technical / SEO specs</option>
+                    </x-admin.form.select>
+
+                    <x-admin.form.textarea name="faq_answer" label="FAQ Answer" :rows="4" :value="$faq->answer" :required="true" />
+
+                    <div class="flex items-center gap-3">
+                        <x-admin.form.toggle name="faq_visible" label="Enabled / Visible" :value="$faq->is_active" />
+                    </div>
+                </form>
                 <x-slot:footer>
-                    <x-admin.button type="submit" variant="primary" size="sm">Save FAQ</x-admin.button>
+                    <x-admin.button type="submit" form="faq-edit-form-{{ $faq->id }}" variant="primary" size="sm">Save Changes</x-admin.button>
                     <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
                 </x-slot:footer>
-            </form>
-        </x-admin.modal>
+            </x-admin.modal>
+        @endforeach
     </div>
 </x-layouts.admin>

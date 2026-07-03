@@ -2,7 +2,7 @@
     <x-slot:breadcrumbs>
         <x-admin.breadcrumbs :items="[
             ['label' => 'Order Management', 'url' => '/admin/orders'],
-            ['label' => 'Invoice ORD-98012']
+            ['label' => 'Invoice '.$order->order_number]
         ]" />
     </x-slot:breadcrumbs>
 
@@ -10,16 +10,13 @@
         <!-- Header Actions -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Order Details: ORD-98012</h1>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Payment processed via Stripe Checkout on July 02, 2026.</p>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Order Details: {{ $order->order_number }}</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Placed on {{ $order->created_at->format('F d, Y') }}.</p>
             </div>
             <div class="flex items-center gap-2.5">
                 <x-admin.button variant="secondary" size="sm" onclick="window.print()">
                     <x-admin.icon name="document-text" class="w-4 h-4 mr-1.5" />
                     <span>Print Invoice</span>
-                </x-admin.button>
-                <x-admin.button variant="primary" size="sm" @click="alert('Project milestone status updated!')">
-                    <span>Kickoff Project</span>
                 </x-admin.button>
             </div>
         </div>
@@ -35,13 +32,13 @@
                         <div class="flex justify-between items-start gap-4 flex-wrap pb-6 border-b border-slate-100 dark:border-slate-800">
                             <div>
                                 <span class="h-8 w-8 rounded-lg bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white font-black text-base inline-block text-center mr-2">A</span>
-                                <span class="font-bold text-slate-900 dark:text-white text-base">Anti Gravity CMS</span>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Suite 404, Tech Park Sector 62<br/>Noida, UP, India</p>
+                                <span class="font-bold text-slate-900 dark:text-white text-base">EverythingEasy</span>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">{{ \App\Models\Setting::get('company_address', '') }}</p>
                             </div>
                             <div class="text-right">
                                 <h2 class="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">INVOICE</h2>
-                                <span class="text-xs font-mono text-slate-500 dark:text-slate-450 block mt-1">#ORD-98012</span>
-                                <span class="text-[10px] text-slate-400 block mt-1">Date: 2026-07-02</span>
+                                <span class="text-xs font-mono text-slate-500 dark:text-slate-450 block mt-1">#{{ $order->order_number }}</span>
+                                <span class="text-[10px] text-slate-400 block mt-1">Date: {{ $order->created_at->format('Y-m-d') }}</span>
                             </div>
                         </div>
 
@@ -49,14 +46,15 @@
                         <div class="grid grid-cols-2 gap-6 text-xs">
                             <div>
                                 <span class="text-slate-450 block uppercase font-bold tracking-wider mb-1">Billed To:</span>
-                                <span class="font-bold text-slate-900 dark:text-white block">John Watson</span>
-                                <span class="text-slate-600 dark:text-slate-350 block mt-0.5">Baker Street Agency Ltd.</span>
-                                <span class="text-slate-500 block mt-0.5">221B Baker St, London, UK</span>
+                                <span class="font-bold text-slate-900 dark:text-white block">{{ $order->client_name }}</span>
+                                <span class="text-slate-600 dark:text-slate-350 block mt-0.5">{{ $order->email }}</span>
+                                @if ($order->billing_address)
+                                    <span class="text-slate-500 block mt-0.5">{{ $order->billing_address }}</span>
+                                @endif
                             </div>
                             <div class="text-right">
-                                <span class="text-slate-450 block uppercase font-bold tracking-wider mb-1">Payment Method:</span>
-                                <span class="font-semibold text-slate-850 dark:text-slate-200 block">Stripe Credit Card</span>
-                                <span class="text-slate-500 font-mono block mt-0.5">Tx ID: ch_3M8e2B1LAx908v</span>
+                                <span class="text-slate-450 block uppercase font-bold tracking-wider mb-1">Payment Status:</span>
+                                <span class="font-semibold text-slate-850 dark:text-slate-200 block capitalize">{{ $order->status }}</span>
                             </div>
                         </div>
 
@@ -72,24 +70,16 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                    <tr>
-                                        <td class="py-3">
-                                            <span class="font-bold text-slate-850 dark:text-slate-205 block">Startup Landing Page Package</span>
-                                            <span class="text-[10px] text-slate-450 mt-0.5 block">Includes 5 sections, fully responsive, dark mode toggle.</span>
-                                        </td>
-                                        <td class="py-3 text-center font-mono">1</td>
-                                        <td class="py-3 text-right font-mono">$499.00</td>
-                                        <td class="py-3 text-right font-mono">$499.00</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-3">
-                                            <span class="font-bold text-slate-850 dark:text-slate-205 block">Priority Support SLA Add-on</span>
-                                            <span class="text-[10px] text-slate-455 mt-0.5 block">Response guarantee under 2 hours.</span>
-                                        </td>
-                                        <td class="py-3 text-center font-mono">1</td>
-                                        <td class="py-3 text-right font-mono">$99.00</td>
-                                        <td class="py-3 text-right font-mono">$99.00</td>
-                                    </tr>
+                                    @foreach ($items as $item)
+                                        <tr>
+                                            <td class="py-3">
+                                                <span class="font-bold text-slate-850 dark:text-slate-205 block">{{ $item->name }}</span>
+                                            </td>
+                                            <td class="py-3 text-center font-mono">{{ $item->quantity }}</td>
+                                            <td class="py-3 text-right font-mono">${{ number_format($item->unit_price, 2) }}</td>
+                                            <td class="py-3 text-right font-mono">${{ number_format($item->line_total, 2) }}</td>
+                                        </tr>
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -99,30 +89,23 @@
                             <div class="w-64 space-y-1.5 text-xs">
                                 <div class="flex justify-between text-slate-500">
                                     <span>Subtotal:</span>
-                                    <span class="font-mono text-slate-700 dark:text-slate-300">$598.00</span>
+                                    <span class="font-mono text-slate-700 dark:text-slate-300">${{ number_format($subtotal, 2) }}</span>
                                 </div>
                                 <div class="flex justify-between text-emerald-600">
-                                    <span>Discount (Code: KICKOFF20):</span>
-                                    <span class="font-mono">- $99.00</span>
+                                    <span>Discount:</span>
+                                    <span class="font-mono">- ${{ number_format($order->discount, 2) }}</span>
                                 </div>
                                 <div class="flex justify-between text-slate-500">
-                                    <span>Taxes (GST 18%):</span>
-                                    <span class="font-mono text-slate-700 dark:text-slate-300">$89.82</span>
+                                    <span>Taxes:</span>
+                                    <span class="font-mono text-slate-700 dark:text-slate-300">${{ number_format($order->tax, 2) }}</span>
                                 </div>
                                 <div class="flex justify-between border-t border-slate-100 dark:border-slate-800 pt-2 font-bold text-sm text-slate-900 dark:text-white">
                                     <span>Total Due:</span>
-                                    <span class="font-mono">$588.82</span>
+                                    <span class="font-mono">${{ number_format($total, 2) }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </x-admin.card>
-
-                <!-- Notes logs -->
-                <x-admin.card title="Client Order Notes">
-                    <p class="text-xs text-slate-650 dark:text-slate-350 leading-relaxed">
-                        "Please configure the primary landing section to use gradient shades matching the everythingeasy.in color palette. The client requested to make the brand logo asset uploadable in both light and dark variations. Launch scheduled before mid-July."
-                    </p>
                 </x-admin.card>
             </div>
 
@@ -130,19 +113,17 @@
             <div class="space-y-6">
                 <!-- Status controls -->
                 <x-admin.card title="Execution Status">
-                    <div class="space-y-4">
-                        <x-admin.form.select name="pay_status" label="Payment Status">
-                            <option value="paid" selected>Completed / Paid</option>
-                            <option value="pending">Awaiting Escrow</option>
-                            <option value="failed">Failed / Refunded</option>
+                    <form method="POST" action="/admin/orders/{{ $order->id }}/status" class="space-y-4">
+                        @csrf
+                        @method('PATCH')
+                        <x-admin.form.select name="status" label="Payment Status">
+                            <option value="paid" @selected($order->status === 'paid')>Completed / Paid</option>
+                            <option value="pending" @selected($order->status === 'pending')>Pending</option>
+                            <option value="refunded" @selected($order->status === 'refunded')>Refunded</option>
+                            <option value="failed" @selected($order->status === 'failed')>Failed</option>
                         </x-admin.form.select>
-
-                        <x-admin.form.select name="order_status" label="Project Milestone">
-                            <option value="new">New Enquiry</option>
-                            <option value="processing" selected>In Execution / Active</option>
-                            <option value="completed">Delivered / Closed</option>
-                        </x-admin.form.select>
-                    </div>
+                        <x-admin.button type="submit" variant="primary" size="sm" class="w-full">Update Status</x-admin.button>
+                    </form>
                 </x-admin.card>
 
                 <!-- Timeline audit logs -->
@@ -150,27 +131,13 @@
                     <div class="flow-root">
                         <ul role="list" class="-mb-8">
                             <li class="relative pb-6">
-                                <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-800"></span>
                                 <div class="relative flex space-x-3">
-                                    <div class="h-8 w-8 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-3xs ring-4 ring-white dark:ring-slate-900">
+                                    <div class="h-8 w-8 rounded-full {{ $order->status === 'paid' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500' }} flex items-center justify-center font-bold text-3xs ring-4 ring-white dark:ring-slate-900">
                                         PAY
                                     </div>
                                     <div class="flex-1 min-w-0 pt-1.5">
-                                        <p class="text-xs text-slate-800 dark:text-slate-300 font-semibold">Payment Confirmed</p>
-                                        <p class="text-[10px] text-slate-500">Processed Stripe Tx #ch_3M8e2B • 2 hours ago</p>
-                                    </div>
-                                </div>
-                            </li>
-
-                            <li class="relative pb-6">
-                                <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-800"></span>
-                                <div class="relative flex space-x-3">
-                                    <div class="h-8 w-8 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-3xs ring-4 ring-white dark:ring-slate-900">
-                                        INV
-                                    </div>
-                                    <div class="flex-1 min-w-0 pt-1.5">
-                                        <p class="text-xs text-slate-800 dark:text-slate-300 font-semibold">Invoice Emailed</p>
-                                        <p class="text-[10px] text-slate-500">Sent copy to watson@baker.org • 3 hours ago</p>
+                                        <p class="text-xs text-slate-800 dark:text-slate-300 font-semibold capitalize">Status: {{ $order->status }}</p>
+                                        <p class="text-[10px] text-slate-500">Last updated {{ $order->updated_at->diffForHumans() }}</p>
                                     </div>
                                 </div>
                             </li>
@@ -182,7 +149,7 @@
                                     </div>
                                     <div class="flex-1 min-w-0 pt-1.5">
                                         <p class="text-xs text-slate-800 dark:text-slate-300 font-semibold">Order Placed</p>
-                                        <p class="text-[10px] text-slate-500">Checkout session completed • 4 hours ago</p>
+                                        <p class="text-[10px] text-slate-500">{{ $order->created_at->diffForHumans() }}</p>
                                     </div>
                                 </div>
                             </li>

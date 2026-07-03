@@ -19,17 +19,24 @@
 
         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-sm">
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl shadow-black/40">
-                <form class="space-y-5" action="/admin" method="GET">
+                @if ($errors->any())
+                    <div class="mb-5 rounded-lg border border-red-900 bg-red-950/40 px-3.5 py-2.5 text-xs text-red-300">
+                        {{ $errors->first() }}
+                    </div>
+                @endif
+
+                <form class="space-y-5" action="/admin/login" method="POST">
+                    @csrf
                     <div>
                         <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Email address</label>
                         <div class="mt-2">
-                            <input 
-                                id="email" 
-                                name="email" 
-                                type="email" 
-                                autocomplete="email" 
-                                required 
-                                value="admin@everythingeasy.in"
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                autocomplete="email"
+                                required
+                                value="{{ old('email') }}"
                                 class="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2 text-sm text-white placeholder:text-slate-650 focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                             >
                         </div>
@@ -43,13 +50,12 @@
                             </div>
                         </div>
                         <div class="mt-2">
-                            <input 
-                                id="password" 
-                                name="password" 
-                                type="password" 
-                                autocomplete="current-password" 
-                                required 
-                                value="••••••••"
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                autocomplete="current-password"
+                                required
                                 class="block w-full rounded-lg border border-slate-800 bg-slate-950 px-3.5 py-2 text-sm text-white placeholder:text-slate-650 focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                             >
                         </div>
@@ -57,14 +63,14 @@
 
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <input id="remember-me" name="remember-me" type="checkbox" checked class="h-4 w-4 rounded-sm border-slate-800 bg-slate-950 text-blue-600 focus:ring-blue-500">
+                            <input id="remember-me" name="remember-me" type="checkbox" value="1" checked class="h-4 w-4 rounded-sm border-slate-800 bg-slate-950 text-blue-600 focus:ring-blue-500">
                             <label for="remember-me" class="ml-2 block text-2xs text-slate-400">Remember session</label>
                         </div>
                     </div>
 
                     <div>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             class="flex w-full justify-center rounded-lg bg-blue-600 px-3.5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-colors"
                         >
                             Sign In to Dashboard

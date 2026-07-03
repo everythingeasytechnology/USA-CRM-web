@@ -14,8 +14,8 @@
         [
             'title' => 'Operations',
             'items' => [
-                ['name' => 'Lead Management', 'icon' => 'leads', 'url' => '/admin/leads', 'id' => 'leads', 'badge' => '12'],
-                ['name' => 'Order Management', 'icon' => 'orders', 'url' => '/admin/orders', 'id' => 'orders', 'badge' => '3'],
+                ['name' => 'Lead Management', 'icon' => 'leads', 'url' => '/admin/leads', 'id' => 'leads', 'badge' => (string) \App\Models\Lead::where('status', 'new')->count()],
+                ['name' => 'Order Management', 'icon' => 'orders', 'url' => '/admin/orders', 'id' => 'orders', 'badge' => (string) \App\Models\Order::where('status', 'pending')->count()],
                 ['name' => 'Form Messages', 'icon' => 'messages', 'url' => '/admin/forms', 'id' => 'forms'],
             ]
         ],
@@ -115,19 +115,22 @@
     <!-- User Profile Quick Bar at Bottom -->
     <div class="p-4 border-t border-slate-800 bg-slate-950/20">
         <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-semibold">
-                    JD
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-semibold flex-shrink-0">
+                    {{ collect(explode(' ', auth()->user()->name ?? 'A'))->map(fn($n) => strtoupper($n[0]))->take(2)->implode('') }}
                 </div>
                 <div class="flex flex-col min-w-0">
-                    <span class="text-xs font-semibold text-white truncate">John Doe</span>
-                    <span class="text-[10px] text-slate-500 truncate">Super Admin</span>
+                    <span class="text-xs font-semibold text-white truncate">{{ auth()->user()->name ?? 'Guest' }}</span>
+                    <span class="text-[10px] text-slate-500 truncate">{{ auth()->user()->role ?? 'Administrator' }}</span>
                 </div>
             </div>
-            
-            <a href="/admin/login" class="text-slate-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-slate-850 cursor-pointer" title="Sign Out">
-                <x-admin.icon name="logout" class="w-4 h-4" />
-            </a>
+
+            <form action="/admin/logout" method="POST">
+                @csrf
+                <button type="submit" class="text-slate-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-slate-850 cursor-pointer" title="Sign Out">
+                    <x-admin.icon name="logout" class="w-4 h-4" />
+                </button>
+            </form>
         </div>
     </div>
 </div>

@@ -123,7 +123,7 @@
                 class="flex items-center gap-2 cursor-pointer focus:outline-none"
             >
                 <div class="h-9 w-9 rounded-full bg-slate-100 border border-slate-250 dark:bg-slate-800 dark:border-slate-750 flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-sm shadow-2xs">
-                    AG
+                    {{ collect(explode(' ', auth()->user()->name ?? 'A'))->map(fn($n) => strtoupper($n[0]))->take(2)->implode('') }}
                 </div>
             </button>
             
@@ -139,37 +139,34 @@
                 style="display: none;"
             >
                 <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
-                    <p class="text-sm font-semibold text-slate-950 dark:text-white truncate">Akhil Golu</p>
-                    <p class="text-xs text-slate-550 dark:text-slate-400 truncate mt-0.5">akhil@everythingeasy.in</p>
+                    <p class="text-sm font-semibold text-slate-950 dark:text-white truncate">{{ auth()->user()->name ?? 'Guest' }}</p>
+                    <p class="text-xs text-slate-550 dark:text-slate-400 truncate mt-0.5">{{ auth()->user()->email ?? '' }}</p>
                 </div>
-                
-                <!-- Role Switcher Panel -->
+
+                <!-- Active Role -->
                 <div class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/20">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1">Active Role</span>
-                    <select class="w-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-700 rounded-md py-1 px-2 text-slate-700 dark:text-slate-350 focus:outline-none cursor-pointer focus:ring-1 focus:ring-blue-500">
-                        <option value="admin">Administrator</option>
-                        <option value="editor">Editor</option>
-                        <option value="seo">SEO Manager</option>
-                        <option value="writer">Content Writer</option>
-                        <option value="sales">Sales Team</option>
-                    </select>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1">Role</span>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-350">{{ auth()->user()->role ?? 'Administrator' }}</span>
                 </div>
-                
+
                 <div class="py-1">
-                    <a href="#settings" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-850/50">
+                    <a href="/admin/settings" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-850/50">
                         <x-admin.icon name="settings" class="w-4.5 h-4.5 text-slate-450" />
                         <span>Settings</span>
                     </a>
-                    <a href="#users" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-850/50">
+                    <a href="/admin/users" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-850/50">
                         <x-admin.icon name="users" class="w-4.5 h-4.5 text-slate-450" />
                         <span>Team Management</span>
                     </a>
                 </div>
                 <div class="py-1 border-t border-slate-200 dark:border-slate-800">
-                    <a href="/admin/login" class="flex items-center gap-2 px-4 py-2 text-sm text-red-650 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20">
-                        <x-admin.icon name="logout" class="w-4.5 h-4.5" />
-                        <span>Sign Out</span>
-                    </a>
+                    <form action="/admin/logout" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-650 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 text-left cursor-pointer">
+                            <x-admin.icon name="logout" class="w-4.5 h-4.5" />
+                            <span>Sign Out</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

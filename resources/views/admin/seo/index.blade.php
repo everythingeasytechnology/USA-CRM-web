@@ -23,7 +23,7 @@
                 </button>
                 <button type="button" @click="activeTab = 'monitor'" :class="activeTab === 'monitor' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold' : 'text-slate-505'" class="px-3 py-1.5 rounded-md cursor-pointer flex items-center gap-1.5">
                     <span>404 Monitor</span>
-                    <span class="px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-500/10 text-red-650 text-3xs">8</span>
+                    <span class="px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-500/10 text-red-650 text-3xs">{{ $notFoundLogs->count() }}</span>
                 </button>
             </div>
         </div>
@@ -98,39 +98,71 @@
         <div x-show="activeTab === 'redirects'" class="space-y-6" style="display: none;">
             <x-admin.card title="Route Redirect Log Rules" subtitle="Manage HTTP 301 (Permanent) or 302 (Temporary) URL changes to protect backlink page authority.">
                 <x-slot:actions>
-                    <x-admin.button variant="primary" size="xs" @click="alert('Create redirect rule')">
+                    <x-admin.button type="button" variant="primary" size="xs" @click="$dispatch('open-modal', 'redirect-modal')">
                         <x-admin.icon name="plus" class="w-4.5 h-4.5 mr-1" />
                         <span>Add Redirect</span>
                     </x-admin.button>
                 </x-slot:actions>
 
                 <x-admin.table :headers="['Request URL Path', 'Destination Target Path', 'HTTP Code', 'Status', 'Actions']">
-                    <tr>
-                        <td class="px-6 py-4 font-mono text-xs font-semibold text-slate-850 dark:text-slate-205">/old-services/web-dev</td>
-                        <td class="px-6 py-4 font-mono text-xs text-slate-500">/services/website-development</td>
-                        <td class="px-6 py-4 text-xs font-bold text-emerald-600">301 (Perm)</td>
-                        <td class="px-6 py-4"><x-admin.badge variant="success">Active</x-admin.badge></td>
-                        <td class="px-6 py-4">
-                            <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:bg-red-50" @click="alert('Delete')"><x-admin.icon name="trash" class="w-4 h-4" /></x-admin.button>
-                        </td>
-                    </tr>
+                    @forelse ($redirects as $redirect)
+                        <tr>
+                            <td class="px-6 py-4 font-mono text-xs font-semibold text-slate-850 dark:text-slate-205">{{ $redirect->from_path }}</td>
+                            <td class="px-6 py-4 font-mono text-xs text-slate-500">{{ $redirect->to_path }}</td>
+                            <td class="px-6 py-4 text-xs font-bold text-emerald-600">{{ $redirect->status_code }} ({{ $redirect->status_code == 301 ? 'Perm' : 'Temp' }})</td>
+                            <td class="px-6 py-4"><x-admin.badge :variant="$redirect->is_active ? 'success' : 'neutral'">{{ $redirect->is_active ? 'Active' : 'Disabled' }}</x-admin.badge></td>
+                            <td class="px-6 py-4">
+                                <x-admin.delete-form :action="'/admin/seo/redirects/'.$redirect->id" confirm="Delete this redirect?">
+                                    <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"><x-admin.icon name="trash" class="w-4 h-4" /></button>
+                                </x-admin.delete-form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="px-6 py-12 text-center text-xs text-slate-400">No redirects configured yet.</td></tr>
+                    @endforelse
                 </x-admin.table>
             </x-admin.card>
+
+            <x-admin.modal name="redirect-modal" title="Add Redirect Rule" maxW="md">
+                <form id="redirect-create-form" action="/admin/seo/redirects" method="POST" class="space-y-4">
+                    @csrf
+                    <x-admin.form.input name="from_path" label="Request URL Path" placeholder="/old-services/web-dev" :required="true" />
+                    <x-admin.form.input name="to_path" label="Destination Target Path" placeholder="/services/website-development" :required="true" />
+                    <x-admin.form.select name="status_code" label="HTTP Status Code">
+                        <option value="301">301 (Permanent)</option>
+                        <option value="302">302 (Temporary)</option>
+                    </x-admin.form.select>
+                </form>
+                <x-slot:footer>
+                    <x-admin.button type="submit" form="redirect-create-form" variant="primary" size="sm">Save Redirect</x-admin.button>
+                    <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
+                </x-slot:footer>
+            </x-admin.modal>
         </div>
 
         <!-- Tab 3: 404 Monitor -->
         <div x-show="activeTab === 'monitor'" class="space-y-6" style="display: none;">
             <x-admin.card title="Broken Link Queries Monitor" subtitle="Monitors user requests hitting dead pages, helping clear internal crawl links.">
                 <x-admin.table :headers="['Dead URL Path', 'Client Referrer Link', 'Hits Count', 'Last Request Date', 'Actions']">
-                    <tr>
-                        <td class="px-6 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-white">/wp-login.php</td>
-                        <td class="px-6 py-4 text-xs text-slate-400">Direct Entry / Attack Script</td>
-                        <td class="px-6 py-4 text-xs font-mono font-bold text-slate-850 dark:text-slate-200">142</td>
-                        <td class="px-6 py-4 text-xs text-slate-500">2026-07-02</td>
-                        <td class="px-6 py-4">
-                            <x-admin.button variant="secondary" size="xs" @click="alert('Create redirect rule')">Redirect URL</x-admin.button>
-                        </td>
-                    </tr>
+                    @forelse ($notFoundLogs as $log)
+                        <tr>
+                            <td class="px-6 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-white">{{ $log->url_path }}</td>
+                            <td class="px-6 py-4 text-xs text-slate-400">{{ $log->referrer ?: 'Direct Entry' }}</td>
+                            <td class="px-6 py-4 text-xs font-mono font-bold text-slate-850 dark:text-slate-200">{{ $log->hit_count }}</td>
+                            <td class="px-6 py-4 text-xs text-slate-500">{{ $log->last_hit_at?->format('Y-m-d') }}</td>
+                            <td class="px-6 py-4 flex gap-1.5">
+                                <form method="POST" action="/admin/seo/404-logs/{{ $log->id }}/convert">
+                                    @csrf
+                                    <button type="submit" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">Redirect URL</button>
+                                </form>
+                                <x-admin.delete-form :action="'/admin/seo/404-logs/'.$log->id" confirm="Remove this log entry?">
+                                    <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"><x-admin.icon name="trash" class="w-4 h-4" /></button>
+                                </x-admin.delete-form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="px-6 py-12 text-center text-xs text-slate-400">No 404 hits logged yet.</td></tr>
+                    @endforelse
                 </x-admin.table>
             </x-admin.card>
         </div>
@@ -140,20 +172,15 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- CSV Upload dropzone -->
                 <div class="space-y-6">
-                    <x-admin.card title="Upload Locations (CSV / JSON)" subtitle="Bulk import cities, states, and countries in one click.">
-                        <form action="#upload" @submit.prevent="alert('Locations database imported successfully!')" class="space-y-4">
-                            <div class="border-2 border-dashed border-slate-200 dark:border-slate-850 rounded-lg p-5 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
+                    <x-admin.card title="Upload Locations (CSV)" subtitle="Bulk import cities, states, and countries in one click.">
+                        <form action="/admin/seo/locations/import" method="POST" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+                            <label class="block border-2 border-dashed border-slate-200 dark:border-slate-850 rounded-lg p-5 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
                                 <x-admin.icon name="upload" class="w-8 h-8 text-slate-400 mx-auto" />
-                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-350 block mt-2">Select locations database file</span>
-                                <span class="text-[10px] text-slate-400 block mt-0.5">Supports CSV, JSON formats (Max 5MB)</span>
-                            </div>
-                            
-                            <div class="flex justify-between items-center text-xs pt-2">
-                                <a href="#sample" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">
-                                    <x-admin.icon name="download" class="w-3.5 h-3.5" />
-                                    <span>Download Sample CSV Template</span>
-                                </a>
-                            </div>
+                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-350 block mt-2">Select locations CSV file</span>
+                                <span class="text-[10px] text-slate-400 block mt-0.5">Columns: city, state, country (Max 5MB)</span>
+                                <input type="file" name="file" accept=".csv" required class="hidden" onchange="this.closest('label').querySelector('span').textContent = this.files[0]?.name || 'Select locations CSV file'">
+                            </label>
 
                             <x-admin.button type="submit" variant="primary" class="w-full justify-center">
                                 Upload & Seed Database
@@ -166,15 +193,15 @@
                         <div class="space-y-3 text-xs">
                             <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-850">
                                 <span class="text-slate-500">Total Countries:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">195</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $locations->pluck('country')->unique()->count() }}</span>
                             </div>
                             <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-850">
                                 <span class="text-slate-500">Total States:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">1,240</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $locations->pluck('state')->filter()->unique()->count() }}</span>
                             </div>
                             <div class="flex justify-between py-1.5">
                                 <span class="text-slate-500">Total Active Cities:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">45,890</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $locations->where('is_active', true)->count() }}</span>
                             </div>
                         </div>
                     </x-admin.card>
@@ -184,58 +211,43 @@
                 <div class="lg:col-span-2 space-y-6">
                     <x-admin.card title="Cities Directory Logs" subtitle="Add or remove active targeting endpoints.">
                         <x-slot:actions>
-                            <x-admin.button variant="secondary" size="xs" @click="alert('Add single location')">
+                            <x-admin.button type="button" variant="secondary" size="xs" @click="$dispatch('open-modal', 'location-modal')">
                                 <x-admin.icon name="plus" class="w-4 h-4 mr-1" />
                                 <span>Add Location</span>
                             </x-admin.button>
                         </x-slot:actions>
-                        
-                        <div class="w-full relative mb-4">
-                            <input 
-                                type="text" 
-                                placeholder="Search cities in directory..." 
-                                class="w-full pl-9 pr-4 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
-                            />
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <x-admin.icon name="search" class="w-3.5 h-3.5 text-slate-400" />
-                            </div>
-                        </div>
 
-                        <x-admin.table :headers="['City Name', 'State Mapped', 'Country Mapped', 'Active Pages', 'Actions']">
-                            <tr>
-                                <td class="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">Dehradun</td>
-                                <td class="px-6 py-4 text-xs text-slate-650 dark:text-slate-350">Uttarakhand</td>
-                                <td class="px-6 py-4 text-xs text-slate-500 font-semibold">India 🇮🇳</td>
-                                <td class="px-6 py-4 text-xs font-mono font-bold text-blue-600">12 pages</td>
-                                <td class="px-6 py-4">
-                                    <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:bg-red-50" @click="alert('Delete location')"><x-admin.icon name="trash" class="w-4 h-4" /></x-admin.button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">Mumbai</td>
-                                <td class="px-6 py-4 text-xs text-slate-650 dark:text-slate-350">Maharashtra</td>
-                                <td class="px-6 py-4 text-xs text-slate-500 font-semibold">India 🇮🇳</td>
-                                <td class="px-6 py-4 text-xs font-mono font-bold text-blue-600">8 pages</td>
-                                <td class="px-6 py-4">
-                                    <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:bg-red-50" @click="alert('Delete location')"><x-admin.icon name="trash" class="w-4 h-4" /></x-admin.button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">New York</td>
-                                <td class="px-6 py-4 text-xs text-slate-650 dark:text-slate-350">New York</td>
-                                <td class="px-6 py-4 text-xs text-slate-500 font-semibold">United States 🇺🇸</td>
-                                <td class="px-6 py-4 text-xs font-mono font-bold text-blue-600">15 pages</td>
-                                <td class="px-6 py-4">
-                                    <x-admin.button variant="ghost" size="xs" class="text-red-500 hover:bg-red-50" @click="alert('Delete location')"><x-admin.icon name="trash" class="w-4 h-4" /></x-admin.button>
-                                </td>
-                            </tr>
+                        <x-admin.table :headers="['City Name', 'State Mapped', 'Country Mapped', 'Actions']">
+                            @forelse ($locations as $location)
+                                <tr>
+                                    <td class="px-6 py-4 text-xs font-bold text-slate-900 dark:text-white">{{ $location->city }}</td>
+                                    <td class="px-6 py-4 text-xs text-slate-650 dark:text-slate-350">{{ $location->state }}</td>
+                                    <td class="px-6 py-4 text-xs text-slate-500 font-semibold">{{ $location->country }}</td>
+                                    <td class="px-6 py-4">
+                                        <x-admin.delete-form :action="'/admin/seo/locations/'.$location->id" confirm="Delete this location?">
+                                            <button type="submit" class="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"><x-admin.icon name="trash" class="w-4 h-4" /></button>
+                                        </x-admin.delete-form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="px-6 py-12 text-center text-xs text-slate-400">No locations added yet.</td></tr>
+                            @endforelse
                         </x-admin.table>
-                        
-                        <div class="mt-4">
-                            <x-admin.pagination :currentPage="1" :totalPages="150" :totalResults="45890" :perPage="3" />
-                        </div>
                     </x-admin.card>
                 </div>
+
+                <x-admin.modal name="location-modal" title="Add Location" maxW="md">
+                    <form id="location-create-form" action="/admin/seo/locations" method="POST" class="space-y-4">
+                        @csrf
+                        <x-admin.form.input name="city" label="City" :required="true" />
+                        <x-admin.form.input name="state" label="State / Region" />
+                        <x-admin.form.input name="country" label="Country" :required="true" />
+                    </form>
+                    <x-slot:footer>
+                        <x-admin.button type="submit" form="location-create-form" variant="primary" size="sm">Save Location</x-admin.button>
+                        <x-admin.button type="button" variant="secondary" size="sm" @click="$dispatch('close-modal')">Cancel</x-admin.button>
+                    </x-slot:footer>
+                </x-admin.modal>
             </div>
         </div>
     </div>
