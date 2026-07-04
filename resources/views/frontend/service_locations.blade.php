@@ -68,7 +68,7 @@
 
       <!-- Pagination Links -->
       <div class="mt-5 d-flex justify-content-center">
-        {{ $locations->links() }}
+        {{ $locations->links('pagination::bootstrap-5') }}
       </div>
     </div>
   </section>
