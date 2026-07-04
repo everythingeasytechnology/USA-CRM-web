@@ -135,8 +135,8 @@ class SystemAdminController extends Controller
                                 $urlCount++;
                                 $locationNodes++;
                                 
-                                // Write to file if it reaches 40,000 links (Google max limit is 50,000)
-                                if ($urlCount >= 40000) {
+                                // Write to file if it reaches 30,000 links (Google max limit is 50,000, optimized to 30,000)
+                                if ($urlCount >= 30000) {
                                     $filename = "sitemap-services-{$fileIndex}.xml";
                                     $xmlContent = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
                                                  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n" .
