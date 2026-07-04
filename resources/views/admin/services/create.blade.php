@@ -69,14 +69,6 @@
                         </div>
                     </x-admin.card>
 
-                    <!-- Features & Benefits checklists -->
-                    <x-admin.card title="Features, Benefits & FAQs">
-                        <div class="space-y-4">
-                            <x-admin.form.textarea name="benefits" label="Key Service Benefits" placeholder="Enter one benefit per line, e.g.&#10;🚀 Boost search conversion ratios&#10;🔒 Enterprise-grade data protection" :rows="3" />
-                            <x-admin.form.textarea name="features" label="Deliverable Features Checklist" placeholder="Enter one deliverable feature per line, e.g.&#10;• Fully responsive layouts&#10;• Dark mode integration" :rows="3" />
-                            <x-admin.form.textarea name="faqs" label="Service Specific FAQs" placeholder="e.g.&#10;Q: How long does delivery take?&#10;A: Delivery timelines range from 2 to 4 weeks depending on specs." :rows="4" />
-                        </div>
-                    </x-admin.card>
 
                     <!-- Programmatic SEO & Location Targeting -->
                     <x-admin.card title="Programmatic SEO & Location Targeting">
@@ -124,9 +116,11 @@
 
                     <!-- Generated Programmatic Landing Pages (Visual Logs) -->
                     <x-admin.card title="Generated Location Landing Pages (Programmatic Preview)" subtitle="Preview and audit the dynamically generated URL routes and meta tags compiled for target locations.">
-                        <x-slot:actions>
-                            <x-admin.button variant="secondary" size="xs" @click="alert('Export all location URLs')">Export URL Map</x-admin.button>
-                        </x-slot:actions>
+                            @if(isset($service) && $service->id)
+                                <x-admin.button variant="secondary" size="xs" x-on:click="window.location.href = '/admin/services/{{ $service->id }}/export-urls'">Export URL Map</x-admin.button>
+                            @else
+                                <x-admin.button variant="secondary" size="xs" x-on:click="alert('Please save this service first to generate and export its location URL map.')">Export URL Map</x-admin.button>
+                            @endif
                         
                         <div class="space-y-4">
                             <div class="flex items-center justify-between gap-4 flex-wrap text-xs">

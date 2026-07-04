@@ -77,16 +77,37 @@ class FormSubmissionController extends Controller
      */
     public function submitLead(Request $request)
     {
+        // Map alternate key names if sent from JS frontend
+        if ($request->has('budget_tier') && !$request->has('budget')) {
+            $request->merge(['budget' => $request->input('budget_tier')]);
+        }
+        if ($request->has('project_details') && !$request->has('notes')) {
+            $request->merge(['notes' => $request->input('project_details')]);
+        }
+        if (!$request->has('country')) {
+            $request->merge(['country' => 'India']);
+        }
+        if (!$request->has('source')) {
+            $request->merge(['source' => 'Website Form']);
+        }
+        if (!$request->has('service_requested') || empty($request->input('service_requested'))) {
+            $request->merge(['service_requested' => 'General Inquiry']);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
-            'service_requested' => 'required|string|max:255',
+            'service_requested' => 'nullable|string|max:255',
             'budget' => 'required|string|max:100',
-            'country' => 'required|string|max:100',
-            'source' => 'required|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'source' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
         ]);
+
+        $validated['country'] = $validated['country'] ?? 'India';
+        $validated['source'] = $validated['source'] ?? 'Website Form';
+        $validated['service_requested'] = $validated['service_requested'] ?? 'General Inquiry';
 
         try {
             DB::beginTransaction();
@@ -219,6 +240,42 @@ class FormSubmissionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Invoicing processing failure.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle public newsletter subscription submissions.
+     */
+    public function submitNewsletter(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:255'
+        ]);
+
+        try {
+            $exists = \App\Models\NewsletterSubscriber::where('email', $validated['email'])->first();
+            if ($exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are already subscribed to our lists!'
+                ]);
+            }
+
+            \App\Models\NewsletterSubscriber::create([
+                'email' => $validated['email'],
+                'source' => $request->input('source', 'Website Footer'),
+                'status' => true
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Thank you for subscribing!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subscription processing failed: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -185,7 +185,18 @@
                     <x-admin.button 
                         variant="secondary" 
                         size="xs" 
-                        @click="cacheCleared = true; setTimeout(() => cacheCleared = false, 4000)"
+                        @click="
+                            fetch('/admin/system/clear-cache')
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        cacheCleared = true;
+                                        setTimeout(() => cacheCleared = false, 4000);
+                                    } else {
+                                        alert('Cache clear failed!');
+                                    }
+                                });
+                        "
                     >
                         Flush
                     </x-admin.button>
@@ -202,11 +213,21 @@
                             <span class="text-[10px] text-slate-550 dark:text-slate-500 block mt-0.5" x-text="maintenanceMode ? 'Public site is OFFLINE' : 'Public site is ONLINE'">ONLINE</span>
                         </div>
                     </div>
-                    <div x-data="{ on: false }">
-                        <input type="hidden" name="maintenance" :value="on ? '1' : '0'" />
+                    <div x-data="{ on: {{ file_exists(storage_path('framework/down')) ? 'true' : 'false' }} }">
                         <button 
                             type="button" 
-                            @click="on = !on; maintenanceMode = on" 
+                            @click="
+                                fetch('/admin/system/toggle-maintenance')
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            on = data.maintenance;
+                                            maintenanceMode = data.maintenance;
+                                        } else {
+                                            alert('Toggle maintenance mode failed!');
+                                        }
+                                    });
+                            " 
                             :class="on ? 'bg-red-600' : 'bg-slate-200 dark:bg-slate-800'"
                             class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
                         >
@@ -229,7 +250,21 @@
                             <span class="text-[10px] text-slate-550 dark:text-slate-500 block mt-0.5">Auto generated weekly</span>
                         </div>
                     </div>
-                    <x-admin.button variant="secondary" size="xs">
+                    <x-admin.button 
+                        variant="secondary" 
+                        size="xs"
+                        @click="
+                            fetch('/admin/system/build-sitemap')
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert(data.message);
+                                    } else {
+                                        alert('Sitemap generation failed!');
+                                    }
+                                });
+                        "
+                    >
                         Build
                     </x-admin.button>
                 </div>
@@ -245,7 +280,23 @@
                             <span class="text-[10px] text-slate-550 dark:text-slate-500 block mt-0.5">Last copy: 12h ago</span>
                         </div>
                     </div>
-                    <x-admin.button variant="secondary" size="xs">
+                    <x-admin.button 
+                        variant="secondary" 
+                        size="xs"
+                        @click="
+                            backupProgress = true;
+                            fetch('/admin/system/create-backup')
+                                .then(res => res.json())
+                                .then(data => {
+                                    backupProgress = false;
+                                    if (data.success) {
+                                        alert(data.message + ' \nSaved file: ' + data.filename);
+                                    } else {
+                                        alert('System backup failed!');
+                                    }
+                                });
+                        "
+                    >
                         Run
                     </x-admin.button>
                 </div>
@@ -380,62 +431,81 @@
                     </div>
                 </x-admin.card>
 
+                @php
+                    $activities = collect();
+                    
+                    \App\Models\Lead::latest()->take(3)->get()->each(function($item) use ($activities) {
+                        $activities->push([
+                            'title' => "Lead from {$item->name}",
+                            'desc' => "Requested: {$item->service_requested} for {$item->company_name}.",
+                            'icon' => 'leads',
+                            'time' => $item->created_at,
+                            'bg' => 'bg-blue-50 dark:bg-blue-500/10 text-blue-600'
+                        ]);
+                    });
+                    
+                    \App\Models\ContactMessage::latest()->take(3)->get()->each(function($item) use ($activities) {
+                        $activities->push([
+                            'title' => "Enquiry from {$item->name}",
+                            'desc' => "Message: \"{$item->message}\"",
+                            'icon' => 'messages',
+                            'time' => $item->created_at,
+                            'bg' => 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600'
+                        ]);
+                    });
+
+                    \App\Models\JobApplication::latest()->take(3)->get()->each(function($item) use ($activities) {
+                        $activities->push([
+                            'title' => "Job Application: {$item->name}",
+                            'desc' => "Applied for " . ($item->jobPosting->title ?? 'vacancy') . " (Exp: {$item->experience}).",
+                            'icon' => 'users',
+                            'time' => $item->created_at,
+                            'bg' => 'bg-purple-50 dark:bg-purple-500/10 text-purple-600'
+                        ]);
+                    });
+
+                    \App\Models\Order::latest()->take(3)->get()->each(function($item) use ($activities) {
+                        $activities->push([
+                            'title' => "Order #{$item->order_number}",
+                            'desc' => "Generated for {$item->client_name} - Amount: $" . number_format($item->amount) . ".",
+                            'icon' => 'orders',
+                            'time' => $item->created_at,
+                            'bg' => 'bg-amber-50 dark:bg-amber-500/10 text-amber-600'
+                        ]);
+                    });
+                    
+                    $recentActivities = $activities->sortByDesc('time')->take(5);
+                @endphp
+
                 <!-- Activity Feed timeline widget -->
                 <x-admin.card title="Recent Activity" subtitle="Updates from EverythingEasy background logs." class="mt-6">
                     <div class="flow-root">
                         <ul role="list" class="-mb-8">
-                            <!-- Timeline node -->
-                            <li class="relative pb-6">
-                                <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-800" aria-hidden="true"></span>
-                                <div class="relative flex space-x-3">
-                                    <div>
-                                        <span class="h-8 w-8 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 ring-4 ring-white dark:ring-slate-900">
-                                            <x-admin.icon name="seo" class="w-4 h-4" />
-                                        </span>
+                            @forelse ($recentActivities as $activity)
+                                <li class="relative pb-6">
+                                    @if (!$loop->last)
+                                        <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-800" aria-hidden="true"></span>
+                                    @endif
+                                    <div class="relative flex space-x-3">
+                                        <div>
+                                            <span class="h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-white dark:ring-slate-900 {{ $activity['bg'] }}">
+                                                <x-admin.icon :name="$activity['icon']" class="w-4 h-4" />
+                                            </span>
+                                        </div>
+                                        <div class="flex-1 min-w-0 pt-1.5">
+                                            <span class="text-xs font-semibold text-slate-850 dark:text-slate-100 block">{{ $activity['title'] }}</span>
+                                            <p class="text-2xs text-slate-550 dark:text-slate-400 mt-0.5">
+                                                {{ $activity['desc'] }}
+                                            </p>
+                                            <span class="text-[9px] text-slate-400 mt-1 block">{{ $activity['time']->diffForHumans() }}</span>
+                                        </div>
                                     </div>
-                                    <div class="flex-1 min-w-0 pt-1.5">
-                                        <p class="text-xs text-slate-600 dark:text-slate-400">
-                                            Auto Sitemap generated & index request dispatched to <a href="#seo" class="font-semibold text-blue-600 hover:underline">Google Console</a>.
-                                        </p>
-                                        <span class="text-3xs text-slate-400 mt-1 block">3 hours ago</span>
-                                    </div>
+                                </li>
+                            @empty
+                                <div class="text-xs text-slate-400 text-center py-8">
+                                    No recent activity logs found.
                                 </div>
-                            </li>
-
-                            <!-- Timeline node -->
-                            <li class="relative pb-6">
-                                <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-800" aria-hidden="true"></span>
-                                <div class="relative flex space-x-3">
-                                    <div>
-                                        <span class="h-8 w-8 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 ring-4 ring-white dark:ring-slate-900">
-                                            <x-admin.icon name="orders" class="w-4 h-4" />
-                                        </span>
-                                    </div>
-                                    <div class="flex-1 min-w-0 pt-1.5">
-                                        <p class="text-xs text-slate-600 dark:text-slate-400">
-                                            Order invoice generated for Stripe checkout ID <code class="font-mono text-slate-900 dark:text-slate-200 text-3xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded-sm">#inv_908a2</code>.
-                                        </p>
-                                        <span class="text-3xs text-slate-400 mt-1 block">5 hours ago</span>
-                                    </div>
-                                </div>
-                            </li>
-
-                            <!-- Timeline node -->
-                            <li class="relative pb-2">
-                                <div class="relative flex space-x-3">
-                                    <div>
-                                        <span class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 ring-4 ring-white dark:ring-slate-900">
-                                            <x-admin.icon name="users" class="w-4 h-4" />
-                                        </span>
-                                    </div>
-                                    <div class="flex-1 min-w-0 pt-1.5">
-                                        <p class="text-xs text-slate-600 dark:text-slate-400">
-                                            Role permission level modified for Editor to support XML robots editor.
-                                        </p>
-                                        <span class="text-3xs text-slate-400 mt-1 block">1 day ago</span>
-                                    </div>
-                                </div>
-                            </li>
+                            @endforelse
                         </ul>
                     </div>
                 </x-admin.card>

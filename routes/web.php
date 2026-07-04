@@ -27,8 +27,32 @@ use App\Http\Controllers\Admin\UserController;
 use App\Models\NotFoundLog;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect('/admin');
+use App\Http\Controllers\Frontend\FrontendController;
+
+Route::get('/', [FrontendController::class, 'index']);
+Route::get('/about', [FrontendController::class, 'about']);
+Route::get('/services', [FrontendController::class, 'services']);
+Route::get('/portfolio', [FrontendController::class, 'portfolio']);
+Route::get('/services/{slug}', [FrontendController::class, 'showService']);
+Route::get('/careers', [FrontendController::class, 'careers']);
+Route::get('/blogs', [FrontendController::class, 'blogs']);
+Route::get('/blogs/{slug}', [FrontendController::class, 'showBlog']);
+Route::get('/contact', [FrontendController::class, 'contact']);
+
+// Checkout & PayPal Payment Processing
+Route::get('/checkout/{package}', [FrontendController::class, 'checkout']);
+Route::post('/checkout/process', [FrontendController::class, 'processCheckout']);
+Route::post('/checkout/payment-success', [FrontendController::class, 'paymentSuccess']);
+Route::get('/checkout/success/{orderNumber}', [FrontendController::class, 'checkoutSuccess']);
+
+// Popup impression/conversion tracking
+Route::post('/popups/{popup}/impression', function (App\Models\Popup $popup) {
+    $popup->increment('impressions');
+    return response()->json(['success' => true]);
+});
+Route::post('/popups/{popup}/conversion', function (App\Models\Popup $popup) {
+    $popup->increment('conversions');
+    return response()->json(['success' => true]);
 });
 
 // Admin auth
@@ -59,6 +83,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
     Route::post('/services/{service}/duplicate', [ServiceController::class, 'duplicate']);
     Route::patch('/services/{service}/toggle-active', [ServiceController::class, 'toggleActive']);
+    Route::get('/services/{service}/export-urls', [ServiceController::class, 'exportUrls'])->name('admin.services.export-urls');
 
     // Packages
     Route::get('/packages', [PackageController::class, 'index']);
@@ -169,6 +194,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     // System Control
     Route::get('/system', [SystemController::class, 'index']);
     Route::post('/system/cache/{type}', [SystemController::class, 'clearCache']);
+    Route::get('/system/clear-cache', [App\Http\Controllers\Admin\SystemAdminController::class, 'clearCache']);
+    Route::get('/system/toggle-maintenance', [App\Http\Controllers\Admin\SystemAdminController::class, 'toggleMaintenance']);
+    Route::get('/system/build-sitemap', [App\Http\Controllers\Admin\SystemAdminController::class, 'buildSitemap']);
+    Route::get('/system/create-backup', [App\Http\Controllers\Admin\SystemAdminController::class, 'createBackup']);
 
     // Careers: Job Postings & Applications
     Route::get('/careers', [JobPostingController::class, 'index']);
@@ -182,6 +211,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 // Public form submissions
 Route::post('/submit-contact', [App\Http\Controllers\FormSubmissionController::class, 'submitContact']);
 Route::post('/submit-lead', [App\Http\Controllers\FormSubmissionController::class, 'submitLead']);
+Route::post('/submit-newsletter', [App\Http\Controllers\FormSubmissionController::class, 'submitNewsletter']);
 Route::post('/submit-application', [App\Http\Controllers\FormSubmissionController::class, 'submitApplication']);
 Route::post('/submit-order', [App\Http\Controllers\FormSubmissionController::class, 'submitOrder']);
 

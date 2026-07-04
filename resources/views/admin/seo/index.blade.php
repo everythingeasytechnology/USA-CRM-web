@@ -68,25 +68,47 @@
 
                 <div class="space-y-6">
                     <x-admin.card title="Sitemap Control Panel">
-                        <div class="space-y-4 text-xs">
+                        <div class="space-y-4 text-xs" x-data="{
+                            loading: false,
+                            rebuild() {
+                                this.loading = true;
+                                fetch('/admin/system/build-sitemap')
+                                .then(res => res.json())
+                                .then(data => {
+                                    this.loading = false;
+                                    alert(data.message);
+                                    window.location.reload();
+                                })
+                                .catch(() => {
+                                    this.loading = false;
+                                    alert('Sitemap rebuild sequence failure.');
+                                });
+                            }
+                        }">
                             <div class="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-850">
                                 <span class="text-slate-500">XML Sitemap Link:</span>
-                                <a href="#xml" class="font-mono text-blue-600 hover:underline">/sitemap.xml</a>
+                                <a href="/sitemap.xml" target="_blank" class="font-mono text-blue-600 hover:underline">/sitemap.xml</a>
                             </div>
                             <div class="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-850">
                                 <span class="text-slate-500">HTML Sitemap Link:</span>
-                                <a href="#html" class="font-mono text-blue-600 hover:underline">/sitemap-index.html</a>
+                                <a href="/services" class="font-mono text-blue-600 hover:underline">/services</a>
                             </div>
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-slate-500">Last Regenerated:</span>
-                                <span class="font-mono text-slate-700 dark:text-slate-300">12 hours ago</span>
+                                <span class="font-mono text-slate-700 dark:text-slate-300">
+                                    @if(file_exists(public_path('sitemap.xml')))
+                                        {{ \Carbon\Carbon::createFromTimestamp(filemtime(public_path('sitemap.xml')))->diffForHumans() }}
+                                    @else
+                                        Never
+                                    @endif
+                                </span>
                             </div>
                             
                             <hr class="border-slate-100 dark:border-slate-800" />
                             
-                            <x-admin.button variant="primary" class="w-full justify-center" @click="alert('Sitemaps successfully updated!')">
+                            <x-admin.button variant="primary" class="w-full justify-center" x-on:click="rebuild()" ::disabled="loading">
                                 <x-admin.icon name="sync" class="w-4 h-4 mr-1.5" />
-                                <span>Regenerate Sitemaps</span>
+                                <span x-text="loading ? 'Rebuilding...' : 'Regenerate Sitemaps'">Regenerate Sitemaps</span>
                             </x-admin.button>
                         </div>
                     </x-admin.card>

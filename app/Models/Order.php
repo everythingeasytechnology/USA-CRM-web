@@ -14,6 +14,7 @@ class Order extends Model
         'order_number',
         'client_name',
         'email',
+        'phone',
         'service_name',
         'amount',
         'tax',

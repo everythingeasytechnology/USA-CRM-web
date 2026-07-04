@@ -132,4 +132,43 @@ class ServiceController extends Controller
 
         return redirect('/admin/services')->with('success', 'Service deleted successfully.');
     }
+
+    public function exportUrls(Service $service)
+    {
+        $baseUrl = url('/');
+        $headers = [
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=' . $service->slug . '-location-urls.csv',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() use ($service, $baseUrl) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Target City', 'Target State', 'Target Country', 'Programmatic SEO URL']);
+            
+            // Base URL
+            fputcsv($file, ['Global / Base', 'All States', 'United States / India', $baseUrl . '/services/' . $service->slug]);
+
+            // Location URLs
+            $locations = \App\Models\Location::orderBy('city')->get();
+            foreach ($locations as $loc) {
+                $citySlug = \Illuminate\Support\Str::slug($loc->city);
+                $pseoUrl = $baseUrl . '/services/' . $service->slug . '-in-' . $citySlug;
+                fputcsv($file, [$loc->city, $loc->state ?? 'N/A', $loc->country, $pseoUrl]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function toggleActive(Service $service): RedirectResponse
+    {
+        $service->update(['is_active' => !$service->is_active]);
+
+        return back()->with('success', 'Service status updated successfully.');
+    }
 }
