@@ -72,6 +72,9 @@ class SystemAdminController extends Controller
     public function buildSitemap()
     {
         try {
+            // Set max execution time to 5 minutes to allow large sitemap generation
+            set_time_limit(300);
+            
             $baseUrl = url('/');
             $currentDate = date('Y-m-d');
             
@@ -95,39 +98,73 @@ class SystemAdminController extends Controller
             file_put_contents(public_path('sitemap-main.xml'), implode("\n", $mainXml));
 
             // ==========================================
-            // 2. Generate sitemap-services.xml (Base & Locations)
+            // 2. Generate sitemap-services.xml (Base & Locations with chunking/splitting)
             // ==========================================
-            $servicesXml = [];
-            $servicesXml[] = '<?xml version="1.0" encoding="UTF-8"?>';
-            $servicesXml[] = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-            
             $services = Service::where('is_active', true)->get();
             $locationNodes = 0;
+            
+            $serviceSitemaps = [];
+            $fileIndex = 1;
+            $currentXml = [];
+            $urlCount = 0;
+
             foreach ($services as $srv) {
-                $servicesXml[] = '  <url>';
-                $servicesXml[] = '    <loc>' . htmlspecialchars($baseUrl . '/services/' . $srv->slug) . '</loc>';
-                $servicesXml[] = '    <lastmod>' . $srv->updated_at->format('Y-m-d') . '</lastmod>';
-                $servicesXml[] = '    <changefreq>weekly</changefreq>';
-                $servicesXml[] = '    <priority>0.7</priority>';
-                $servicesXml[] = '  </url>';
+                // Add the base service page
+                $currentXml[] = '  <url>';
+                $currentXml[] = '    <loc>' . htmlspecialchars($baseUrl . '/services/' . $srv->slug) . '</loc>';
+                $currentXml[] = '    <lastmod>' . $srv->updated_at->format('Y-m-d') . '</lastmod>';
+                $currentXml[] = '    <changefreq>weekly</changefreq>';
+                $currentXml[] = '    <priority>0.7</priority>';
+                $currentXml[] = '  </url>';
+                $urlCount++;
                 
-                // Add target locations
+                // Add target locations dynamically via low-memory DB chunking (40,000 URLs per file limit)
                 if ($srv->pseo_enabled) {
-                    $locations = \App\Models\Location::all();
-                    foreach ($locations as $loc) {
-                        $locationSlug = \Illuminate\Support\Str::slug($loc->city);
-                        $servicesXml[] = '  <url>';
-                        $servicesXml[] = '    <loc>' . htmlspecialchars($baseUrl . '/services/' . $srv->slug . '-in-' . $locationSlug) . '</loc>';
-                        $servicesXml[] = '    <lastmod>' . $currentDate . '</lastmod>';
-                        $servicesXml[] = '    <changefreq>monthly</changefreq>';
-                        $servicesXml[] = '    <priority>0.6</priority>';
-                        $servicesXml[] = '  </url>';
-                        $locationNodes++;
-                    }
+                    \Illuminate\Support\Facades\DB::table('locations')
+                        ->select('city')
+                        ->orderBy('id')
+                        ->chunk(5000, function ($locations) use (&$currentXml, &$urlCount, &$fileIndex, &$serviceSitemaps, $baseUrl, $srv, $currentDate, &$locationNodes) {
+                            foreach ($locations as $loc) {
+                                $locationSlug = \Illuminate\Support\Str::slug($loc->city);
+                                $currentXml[] = '  <url>';
+                                $currentXml[] = '    <loc>' . htmlspecialchars($baseUrl . '/services/' . $srv->slug . '-in-' . $locationSlug) . '</loc>';
+                                $currentXml[] = '    <lastmod>' . $currentDate . '</lastmod>';
+                                $currentXml[] = '    <changefreq>monthly</changefreq>';
+                                $currentXml[] = '    <priority>0.6</priority>';
+                                $currentXml[] = '  </url>';
+                                $urlCount++;
+                                $locationNodes++;
+                                
+                                // Write to file if it reaches 40,000 links (Google max limit is 50,000)
+                                if ($urlCount >= 40000) {
+                                    $filename = "sitemap-services-{$fileIndex}.xml";
+                                    $xmlContent = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
+                                                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n" .
+                                                 implode("\n", $currentXml) . "\n" .
+                                                 '</urlset>';
+                                    file_put_contents(public_path($filename), $xmlContent);
+                                    $serviceSitemaps[] = $filename;
+                                    
+                                    // Reset counters
+                                    $currentXml = [];
+                                    $urlCount = 0;
+                                    $fileIndex++;
+                                }
+                            }
+                        });
                 }
             }
-            $servicesXml[] = '</urlset>';
-            file_put_contents(public_path('sitemap-services.xml'), implode("\n", $servicesXml));
+
+            // Write any leftover URLs to the final services sitemap file
+            if ($urlCount > 0 || empty($serviceSitemaps)) {
+                $filename = "sitemap-services-{$fileIndex}.xml";
+                $xmlContent = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
+                             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n" .
+                             implode("\n", $currentXml) . "\n" .
+                             '</urlset>';
+                file_put_contents(public_path($filename), $xmlContent);
+                $serviceSitemaps[] = $filename;
+            }
 
             // ==========================================
             // 3. Generate sitemap-blogs.xml (Blogs list)
@@ -155,7 +192,7 @@ class SystemAdminController extends Controller
             $indexXml[] = '<?xml version="1.0" encoding="UTF-8"?>';
             $indexXml[] = '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
             
-            $subSitemaps = ['sitemap-main.xml', 'sitemap-services.xml', 'sitemap-blogs.xml'];
+            $subSitemaps = array_merge(['sitemap-main.xml'], $serviceSitemaps, ['sitemap-blogs.xml']);
             foreach ($subSitemaps as $sub) {
                 $indexXml[] = '  <sitemap>';
                 $indexXml[] = '    <loc>' . htmlspecialchars($baseUrl . '/' . $sub) . '</loc>';
@@ -170,7 +207,7 @@ class SystemAdminController extends Controller
             return response()->json([
                 'success' => true,
                 'count' => $totalUrlNodes,
-                'message' => "XML sitemap index rebuilt. Sub-sitemaps written (sitemap-main.xml, sitemap-services.xml, sitemap-blogs.xml) and linked under sitemap.xml."
+                'message' => "XML sitemap index rebuilt. Sub-sitemaps written (sitemap-main.xml, " . implode(', ', $serviceSitemaps) . ", sitemap-blogs.xml) and linked under sitemap.xml."
             ]);
         } catch (\Exception $e) {
             return response()->json([
