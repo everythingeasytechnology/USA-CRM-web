@@ -13,13 +13,27 @@ use Illuminate\View\View;
 
 class SeoController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $redirects = RedirectRule::latest()->get();
         $notFoundLogs = NotFoundLog::orderByDesc('hit_count')->get();
-        $locations = Location::orderBy('city')->get();
+        
+        // Paginate locations (15 per page) to prevent memory limit exhaustion
+        $locations = Location::orderBy('city')->paginate(15);
+        
+        // Highly performant database aggregation queries (zero model instantiation memory overhead)
+        $totalCountries = Location::distinct('country')->count('country');
+        $totalStates = Location::whereNotNull('state')->where('state', '!=', '')->distinct('state')->count('state');
+        $totalActiveCities = Location::where('is_active', true)->count();
 
-        return view('admin.seo.index', compact('redirects', 'notFoundLogs', 'locations'));
+        return view('admin.seo.index', compact(
+            'redirects', 
+            'notFoundLogs', 
+            'locations', 
+            'totalCountries', 
+            'totalStates', 
+            'totalActiveCities'
+        ));
     }
 
     public function storeRedirect(Request $request): RedirectResponse

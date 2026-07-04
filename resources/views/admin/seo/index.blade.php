@@ -3,7 +3,7 @@
         <x-admin.breadcrumbs :items="[['label' => 'SEO Operations Control']]" />
     </x-slot:breadcrumbs>
 
-    <div class="space-y-6" x-data="{ activeTab: 'general' }">
+    <div class="space-y-6" x-data="{ activeTab: '{{ request()->query('tab', 'general') }}' }">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -215,15 +215,15 @@
                         <div class="space-y-3 text-xs">
                             <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-850">
                                 <span class="text-slate-500">Total Countries:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $locations->pluck('country')->unique()->count() }}</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $totalCountries }}</span>
                             </div>
                             <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-850">
                                 <span class="text-slate-500">Total States:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $locations->pluck('state')->filter()->unique()->count() }}</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $totalStates }}</span>
                             </div>
                             <div class="flex justify-between py-1.5">
                                 <span class="text-slate-500">Total Active Cities:</span>
-                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $locations->where('is_active', true)->count() }}</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ $totalActiveCities }}</span>
                             </div>
                         </div>
                     </x-admin.card>
@@ -255,6 +255,11 @@
                                 <tr><td colspan="4" class="px-6 py-12 text-center text-xs text-slate-400">No locations added yet.</td></tr>
                             @endforelse
                         </x-admin.table>
+
+                        <!-- Tailwind Pagination Links container -->
+                        <div class="mt-4 px-6 py-3 border-t border-slate-100 dark:border-slate-800">
+                            {{ $locations->appends(['tab' => 'locations'])->links() }}
+                        </div>
                     </x-admin.card>
                 </div>
 
