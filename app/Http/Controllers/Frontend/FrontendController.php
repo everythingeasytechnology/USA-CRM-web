@@ -225,8 +225,8 @@ class FrontendController extends Controller
      */
     public function serviceLocations()
     {
-        $services = \App\Models\Service::where('is_active', true)->orderBy('display_order')->get();
-        $locations = \App\Models\Location::orderBy('city')->get();
+        $services = \App\Models\Service::where('is_active', true)->where('pseo_enabled', true)->get();
+        $locations = \App\Models\Location::orderBy('city')->paginate(30);
 
         return view('frontend.service_locations', compact('services', 'locations'));
     }

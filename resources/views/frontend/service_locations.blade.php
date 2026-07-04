@@ -25,50 +25,50 @@
   <section class="py-5 bg-light">
     <div class="container py-4">
       <div class="row g-4">
-        @forelse ($services as $srv)
+        @forelse ($locations as $loc)
+            @php
+                $citySlug = \Illuminate\Support\Str::slug($loc->city);
+            @endphp
             <div class="col-lg-4 col-md-6 mb-4">
               <div class="card h-100 border-0 shadow-sm p-4 bg-white" style="border-radius: 16px; border-top: 4px solid var(--primary-color) !important;">
                 <div class="d-flex align-items-center mb-3">
                   <div class="flex-shrink-0 text-primary me-2">
                     <i class="fas fa-map-marked-alt fa-lg text-primary"></i>
                   </div>
-                  <h5 class="fw-bold text-dark mb-0">{{ $srv->name }}</h5>
+                  <h5 class="fw-bold text-dark mb-0">
+                    {{ $loc->city }}
+                    @if($loc->state)
+                      <span class="text-muted font-normal small" style="font-size: 13px;">, {{ $loc->state }}</span>
+                    @endif
+                  </h5>
                 </div>
                 
-                <p class="text-muted small mb-4" style="line-height: 1.6;">
-                  {{ Str::limit($srv->short_description, 120) }}
-                </p>
+                <hr class="my-2 border-slate-100 dark:border-slate-800" />
 
-                <div class="location-links-box">
-                  <h6 class="fw-bold text-dark mb-2.5 small text-uppercase tracking-wider text-muted" style="font-size: 11px;">Target Locations:</h6>
-                  
-                  @if ($srv->pseo_enabled && $locations->count() > 0)
-                      <ul class="list-unstyled mb-0">
-                        @foreach ($locations as $loc)
-                            @php
-                                $citySlug = \Illuminate\Support\Str::slug($loc->city);
-                            @endphp
-                            <li class="mb-2">
-                              <a href="/services/{{ $srv->slug }}-in-{{ $citySlug }}" class="text-muted text-decoration-none hover-link-primary transition small d-flex align-items-center" style="font-size: 13px;">
-                                <i class="fas fa-map-marker-alt text-primary me-2" style="font-size: 11px; opacity: 0.7;"></i>
-                                {{ $srv->name }} in {{ $loc->city }}
-                              </a>
-                            </li>
-                        @endforeach
-                      </ul>
-                  @else
-                      <p class="text-muted small mb-0">
-                        Available globally. <a href="/services/{{ $srv->slug }}" class="text-primary text-decoration-none fw-bold">Explore Service <i class="fas fa-arrow-right ms-1"></i></a>
-                      </p>
-                  @endif
+                <div class="location-links-box mt-3">
+                  <ul class="list-unstyled mb-0">
+                    @foreach ($services as $srv)
+                        <li class="mb-2">
+                          <a href="/services/{{ $srv->slug }}-in-{{ $citySlug }}" class="text-muted text-decoration-none hover-link-primary transition small d-flex align-items-center" style="font-size: 13px;">
+                            <i class="fas fa-map-marker-alt text-primary me-2" style="font-size: 11px; opacity: 0.7;"></i>
+                            {{ $srv->name }} in {{ $loc->city }}
+                          </a>
+                        </li>
+                    @endforeach
+                  </ul>
                 </div>
               </div>
             </div>
         @empty
             <div class="col-12 text-center py-5 text-muted bg-white rounded shadow-sm">
-                No active services cataloged at the moment.
+                No active locations targeted at the moment.
             </div>
         @endforelse
+      </div>
+
+      <!-- Pagination Links -->
+      <div class="mt-5 d-flex justify-content-center">
+        {{ $locations->links() }}
       </div>
     </div>
   </section>
