@@ -35,6 +35,24 @@
 @section('meta_description', $resolvedDesc)
 
 @section('head')
+    <!-- Canonical Link -->
+    <link rel="canonical" href="{{ url()->current() }}" />
+
+    <!-- Open Graph / Facebook Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta property="og:title" content="{{ $resolvedTitle }}" />
+    <meta property="og:description" content="{{ $resolvedDesc }}" />
+    <meta property="og:image" content="{{ $service->cover_image ? url($service->cover_image) : asset('images/logo.webp') }}" />
+    <meta property="og:site_name" content="{{ $brandName }}" />
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="{{ url()->current() }}" />
+    <meta name="twitter:title" content="{{ $resolvedTitle }}" />
+    <meta name="twitter:description" content="{{ $resolvedDesc }}" />
+    <meta name="twitter:image" content="{{ $service->cover_image ? url($service->cover_image) : asset('images/logo.webp') }}" />
+
     @if ($resolvedSchema)
         {!! $resolvedSchema !!}
     @else
