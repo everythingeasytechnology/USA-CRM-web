@@ -53,7 +53,7 @@
             <div class="mb-3 text-primary"><i class="fas fa-map-marker-alt fa-3x"></i></div>
             <h5 class="fw-bold mb-2 text-dark">Office Address</h5>
             <p class="text-muted small mb-0">
-              {!! nl2br(e(\App\Models\Setting::get('address', 'EverythingEasy Technology Balawala, Dehradun 248001 Uttarakhand, India'))) !!}
+              {!! nl2br(e(\App\Models\Setting::get('address', '1309 Coffeen Ave STE 1200, Sheridan, WY 82801, USA'))) !!}
             </p>
             <a href="https://maps.google.com" target="_blank" class="btn btn-outline-primary btn-sm mt-3 w-100 py-2">Get Directions</a>
           </div>
@@ -64,9 +64,9 @@
           <div class="card h-100 p-4 bg-white rounded border border-light shadow-sm text-center">
             <div class="mb-3 text-primary"><i class="fas fa-phone fa-3x"></i></div>
             <h5 class="fw-bold mb-2 text-dark">Phone Numbers</h5>
-            <p class="text-muted small mb-1">{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}</p>
-            <p class="text-muted small mb-0">{{ \App\Models\Setting::get('whatsapp', '+91 70883 60325') }}</p>
-            <a href="tel:{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}" class="btn btn-outline-primary btn-sm mt-3 w-100 py-2">Call Support</a>
+            <p class="text-muted small mb-1">{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}</p>
+            <p class="text-muted small mb-0">{{ \App\Models\Setting::get('whatsapp', '+1 (888) 621-0452') }}</p>
+            <a href="tel:{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}" class="btn btn-outline-primary btn-sm mt-3 w-100 py-2">Call Support</a>
           </div>
         </div>
 

@@ -693,7 +693,7 @@
           <div class="mt-4 pt-2">
             <p class="text-white-50 small mb-1">Call to ask any question</p>
             <h3 class="fw-bold text-warning mb-0" style="font-size: 28px;">
-              <a href="tel:{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}" class="text-warning text-decoration-none">{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}</a>
+              <a href="tel:{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}" class="text-warning text-decoration-none">{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}</a>
             </h3>
           </div>
         </div>
@@ -834,8 +834,8 @@
             </div>
             <h5 class="fw-bold text-dark mb-2" style="font-size: 18px;">Call Us</h5>
             <p class="text-muted small mb-0" style="font-size: 13px; line-height: 1.6;">
-              <a href="tel:{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}" class="text-muted text-decoration-none hover-primary">{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}</a><br />
-              <a href="tel:{{ \App\Models\Setting::get('whatsapp', '+91 70883 60325') }}" class="text-muted text-decoration-none hover-primary">{{ \App\Models\Setting::get('whatsapp', '+91 70883 60325') }}</a>
+              <a href="tel:{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}" class="text-muted text-decoration-none hover-primary">{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}</a><br />
+              <a href="tel:{{ \App\Models\Setting::get('whatsapp', '+1 (888) 621-0452') }}" class="text-muted text-decoration-none hover-primary">{{ \App\Models\Setting::get('whatsapp', '+1 (888) 621-0452') }}</a>
             </p>
           </div>
         </div>

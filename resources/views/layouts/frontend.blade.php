@@ -167,7 +167,7 @@
               <h6 class="fw-bold mb-3">Get In Touch</h6>
                <div class="contact-item d-flex mb-2">
                 <span class="text-muted">
-                  <i class="fas fa-map-marker-alt me-2 mt-1 text-primary"></i>{!! nl2br(e(\App\Models\Setting::get('address', 'EverythingEasy Technology Balawala, Dehradun 248001 Uttarakhand, India'))) !!}
+                  <i class="fas fa-map-marker-alt me-2 mt-1 text-primary"></i>{!! nl2br(e(\App\Models\Setting::get('address', '1309 Coffeen Ave STE 1200, Sheridan, WY 82801, USA'))) !!}
                 </span>
               </div>
               <div class="contact-item d-flex mb-2">
@@ -176,7 +176,7 @@
               </div>
               <div class="contact-item d-flex mb-3">
                 <i class="fas fa-phone me-2 mt-1 text-primary"></i>
-                <a href="tel:{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}" class="text-muted text-decoration-none">{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}</a>
+                <a href="tel:{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}" class="text-muted text-decoration-none">{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}</a>
               </div>
             </div>
           </div>

@@ -243,7 +243,7 @@
         <a href="/#quote" class="btn bg-white text-primary fw-bold px-4 py-2.5 d-flex align-items-center shadow-sm" style="border-radius: 8px; font-size: 15px;">
           <i class="fas fa-envelope me-2"></i> Get Free Quote
         </a>
-        <a href="tel:{{ \App\Models\Setting::get('phone', '+91 86308 40577') }}" class="btn btn-outline-light text-white fw-bold px-4 py-2.5 d-flex align-items-center" style="border-radius: 8px; font-size: 15px; border-width: 2px;">
+        <a href="tel:{{ \App\Models\Setting::get('phone', '+1 (888) 621-0452') }}" class="btn btn-outline-light text-white fw-bold px-4 py-2.5 d-flex align-items-center" style="border-radius: 8px; font-size: 15px; border-width: 2px;">
           <i class="fas fa-phone-alt me-2"></i> Call Now
         </a>
       </div>

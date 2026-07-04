@@ -205,7 +205,7 @@
 
             <div class="mb-3">
               <label class="form-label small fw-bold">Phone Number</label>
-              <input type="tel" x-model="phone" required placeholder="+91 99999-99999" class="form-control" />
+              <input type="tel" x-model="phone" required placeholder="+1 (555) 000-0000" class="form-control" />
             </div>
 
             <div class="row mb-3">
