@@ -52,13 +52,23 @@ class FrontendController extends Controller
     public function showService($slug)
     {
         $city = null;
-        $state = 'Uttarakhand';
+        $state = '';
         
         // Parse programmatic SEO location suffix, e.g., web-development-in-dehradun
         if (preg_match('/^(.*)-in-(.*)$/', $slug, $matches)) {
             $serviceSlug = $matches[1];
             $citySlug = $matches[2];
-            $city = ucwords(str_replace('-', ' ', $citySlug));
+            $cityClean = str_replace('-', ' ', $citySlug);
+            
+            // Fetch correct location details from database
+            $location = \App\Models\Location::where('city', 'like', $cityClean)->first();
+            if ($location) {
+                $city = $location->city;
+                $state = $location->state;
+            } else {
+                $city = ucwords($cityClean);
+                $state = '';
+            }
         } else {
             $serviceSlug = $slug;
         }
