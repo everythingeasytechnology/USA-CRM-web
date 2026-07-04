@@ -219,4 +219,15 @@ class FrontendController extends Controller
         $order = \App\Models\Order::where('order_number', $orderNumber)->firstOrFail();
         return view('frontend.checkout_success', compact('order'));
     }
+
+    /**
+     * Service Locations HTML sitemap / directory page
+     */
+    public function serviceLocations()
+    {
+        $services = \App\Models\Service::where('is_active', true)->orderBy('display_order')->get();
+        $locations = \App\Models\Location::orderBy('city')->get();
+
+        return view('frontend.service_locations', compact('services', 'locations'));
+    }
 }

@@ -24,6 +24,42 @@
     <!-- Alpine.js library -->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
+    <style>
+        @media (max-width: 767.98px) {
+            body {
+                padding-bottom: 65px !important;
+            }
+            .mobile-quote-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 9999;
+                padding: 10px 16px;
+                background: #ffffff;
+                box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
+                border-top: 1px solid #eaeaea;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .mobile-quote-btn {
+                background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;
+                color: #ffffff !important;
+                font-weight: 600;
+                text-decoration: none;
+                font-size: 15px;
+                padding: 10px 24px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+            }
+        }
+    </style>
+
     @yield('head')
 </head>
 <body>
@@ -49,9 +85,9 @@
             <li class="nav-item">
               <a class="nav-link {{ request()->is('services*') ? 'active' : '' }}" href="/services">Services</a>
             </li>
-            <li class="nav-item">
+            {{-- <li class="nav-item">
               <a class="nav-link {{ request()->is('portfolio') ? 'active' : '' }}" href="/portfolio">Portfolio</a>
-            </li>
+            </li> --}}
             <li class="nav-item">
               <a class="nav-link {{ request()->is('blogs*') ? 'active' : '' }}" href="/blogs">Blog</a>
             </li>
@@ -108,6 +144,8 @@
                 <li><a href="/blogs" class="text-muted text-decoration-none">Blog</a></li>
                 <li><a href="/contact" class="text-muted text-decoration-none">Contact Us</a></li>
                 <li><a href="/careers" class="text-muted text-decoration-none">Careers</a></li>
+                <li><a href="/sitemap.xml" class="text-muted text-decoration-none" target="_blank">Sitemap</a></li>
+                <li><a href="/service-locations" class="text-muted text-decoration-none">Service Locations</a></li>
               </ul>
             </div>
           </div>
@@ -248,6 +286,12 @@
         </div>
       </div>
     @endforeach
+    <!-- Mobile-only Fixed Bottom Quote Button -->
+    <div class="mobile-quote-bar d-md-none">
+        <a href="/#quote" class="mobile-quote-btn">
+            <i class="fas fa-envelope me-2"></i> Get Free Quote
+        </a>
+    </div>
 
 </body>
 </html>

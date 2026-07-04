@@ -34,6 +34,7 @@ Route::get('/about', [FrontendController::class, 'about']);
 Route::get('/services', [FrontendController::class, 'services']);
 Route::get('/portfolio', [FrontendController::class, 'portfolio']);
 Route::get('/services/{slug}', [FrontendController::class, 'showService']);
+Route::get('/service-locations', [FrontendController::class, 'serviceLocations']);
 Route::get('/careers', [FrontendController::class, 'careers']);
 Route::get('/blogs', [FrontendController::class, 'blogs']);
 Route::get('/blogs/{slug}', [FrontendController::class, 'showBlog']);
